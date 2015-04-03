@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{c1e71a01-c034-44f2-912d-76a40eb85398}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Geometric">
+      <UniqueIdentifier>{b94ba1b3-f1dd-422c-bac1-37b2eea60714}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -24,6 +30,33 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="minixml.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="physics.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="geometric.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="gjk.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="hull.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="vecmatquat.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="vecmatquat_minimal.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="wingmesh.h">
+      <Filter>Geometric</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -31,6 +64,9 @@
     </ClCompile>
     <ClCompile Include="PhysicsModelBase.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics.cpp">
+      <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
