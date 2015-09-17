@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ImportGroup Label="PropertySheets" />
+  
+  <PropertyGroup Label="UserMacros" />
+  
+  <PropertyGroup>
+    <_PropertySheetDisplayName>cv64-VS2013</_PropertySheetDisplayName>
+  </PropertyGroup>
+  
+	<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<ClCompile>
+		  <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+		  <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+		</ClCompile>
+		<Link>
+		  <AdditionalLibraryDirectories>$(OPENCV_DIR)\x64\vc12\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+		  <AdditionalDependencies>opencv_calib3d%OPENCV_VER%d.lib;opencv_core%OPENCV_VER%d.lib;opencv_features2d%OPENCV_VER%d.lib;opencv_flann%OPENCV_VER%d.lib;opencv_hal%OPENCV_VER%d.lib;opencv_highgui%OPENCV_VER%d.lib;opencv_imgcodecs%OPENCV_VER%d.lib;opencv_imgproc%OPENCV_VER%d.lib;opencv_ml%OPENCV_VER%d.lib;opencv_objdetect%OPENCV_VER%d.lib;opencv_photo%OPENCV_VER%d.lib;opencv_stitching%OPENCV_VER%d.lib;opencv_superres%OPENCV_VER%d.lib;opencv_ts%OPENCV_VER%d.lib;opencv_video%OPENCV_VER%d.lib;opencv_videoio%OPENCV_VER%d.lib;opencv_videostab%OPENCV_VER%d.lib;opencv_viz%OPENCV_VER%d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+		</Link>
+	</ItemDefinitionGroup>
+  
+	<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<ClCompile>
+		  <AdditionalIncludeDirectories>$(OPENCV_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+		  <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+		</ClCompile>
+		<Link>
+		  <AdditionalLibraryDirectories>$(OPENCV_DIR)\x64\vc12\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+		  <AdditionalDependencies>opencv_calib3d%OPENCV_VER%.lib;opencv_core%OPENCV_VER%.lib;opencv_features2d%OPENCV_VER%.lib;opencv_flann%OPENCV_VER%.lib;opencv_hal%OPENCV_VER%.lib;opencv_highgui%OPENCV_VER%.lib;opencv_imgcodecs%OPENCV_VER%.lib;opencv_imgproc%OPENCV_VER%.lib;opencv_ml%OPENCV_VER%.lib;opencv_objdetect%OPENCV_VER%.lib;opencv_photo%OPENCV_VER%.lib;opencv_stitching%OPENCV_VER%.lib;opencv_superres%OPENCV_VER%.lib;opencv_ts%OPENCV_VER%.lib;opencv_video%OPENCV_VER%.lib;opencv_videoio%OPENCV_VER%.lib;opencv_videostab%OPENCV_VER%.lib;opencv_viz%OPENCV_VER%.lib;%(AdditionalDependencies)</AdditionalDependencies>
+		</Link>
+	</ItemDefinitionGroup>
+</Project>
