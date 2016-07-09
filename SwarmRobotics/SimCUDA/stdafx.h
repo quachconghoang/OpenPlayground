@@ -5,8 +5,6 @@
 
 #pragma once
 
-#define GLEW_STATIC
-#define GLFW_INCLUDE_GLU
 #include "targetver.h"
 
 #include <stdio.h>

@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SwarmRobotics", "SwarmRobotics\SwarmRobotics.vcxproj", "{CA1E290F-75C8-44FB-BD9A-7E2A981E39F8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimCUDA", "SimCUDA\SimCUDA.vcxproj", "{633BE4A3-4937-4966-B3CF-73F36E9768C4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Something", "Test_Something\Test_Something.vcxproj", "{FC2C1362-690E-4A72-81D4-734F6B57E3FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CA1E290F-75C8-44FB-BD9A-7E2A981E39F8}.Debug|x64.ActiveCfg = Debug|x64
+		{CA1E290F-75C8-44FB-BD9A-7E2A981E39F8}.Debug|x64.Build.0 = Debug|x64
+		{CA1E290F-75C8-44FB-BD9A-7E2A981E39F8}.Release|x64.ActiveCfg = Release|x64
+		{CA1E290F-75C8-44FB-BD9A-7E2A981E39F8}.Release|x64.Build.0 = Release|x64
+		{633BE4A3-4937-4966-B3CF-73F36E9768C4}.Debug|x64.ActiveCfg = Debug|x64
+		{633BE4A3-4937-4966-B3CF-73F36E9768C4}.Debug|x64.Build.0 = Debug|x64
+		{633BE4A3-4937-4966-B3CF-73F36E9768C4}.Release|x64.ActiveCfg = Release|x64
+		{633BE4A3-4937-4966-B3CF-73F36E9768C4}.Release|x64.Build.0 = Release|x64
+		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Debug|x64.ActiveCfg = Debug|x64
+		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Debug|x64.Build.0 = Debug|x64
+		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Release|x64.ActiveCfg = Release|x64
+		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
