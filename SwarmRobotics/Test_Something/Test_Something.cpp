@@ -3,94 +3,146 @@
 
 #include "stdafx.h"
 #include "opencv2/opencv.hpp"
+#include <conio.h>
+#include <iostream>
+#include <Eigen/dense>
 
-using namespace std;
-using namespace cv;
+#include "World.h"
+#include "PathFinder.h"
+#include "SearchNode.h"
 
-string testFile = "C:\\Users\\HoangQC\\Desktop\\lossMask.png";
-string inPath = "C:\\Users\\HoangQC\\Desktop\\Test\\";
-string inFile = "lossMask_";
+using namespace pcl;
+using namespace pcl::visualization;
 
-inline string getInFile(int num){ return inPath + inFile + std::to_string(num) + ".png"; }
-inline string getOutFile(int num){ return inPath + inFile + std::to_string(num) + "_r.png"; }
+PCLVisualizer::Ptr viewer;
 
-void test()
+//=======================
+// User Input parameters
+double a = 1; // cost weight in X direction
+double b = 1; // cost weight in Y direction
+double c = 2; // cost weight in Z direction
+int gridSize = 50;  // size of grid for path finding (smaller ~ smoother)
+int uavRadius = 500;  // size of UAV (its radius)
+Eigen::Vector3i p;
+
+int main()
 {
-	for (int f = 0; f < 20;f++)
+	viewer.reset(new PCLVisualizer);
+	viewer->setSize(640, 480);
+	viewer->addCoordinateSystem(1000.0);
+
+	PointCloud<PointXYZ>::Ptr worldCloud(new PointCloud<PointXYZ>);
+	pcl::io::loadPCDFile("..\\..\\IndoorData\\environment.pcd", *worldCloud);
+	
+	PointXYZ minPoint, maxPoint;
+	pcl::getMinMax3D(*worldCloud, minPoint, maxPoint);
+
+	// Create the environment (UAV world)
+	int worldWidth = ceil((maxPoint.x - minPoint.x) / gridSize);
+	int worldHeight = ceil((maxPoint.y - minPoint.y) / gridSize);
+	int worldDepth = ceil((maxPoint.z - minPoint.z) / gridSize);
+	World world(worldWidth, worldHeight, worldDepth); // blank world
+
+	// Import blocked points to the world
+	std::cout << "Initialize block points..." << std::endl;
+	// Each blocked point must be extended to the UAV size to ensure safe operation of UAV
+	int blockRadius = uavRadius / gridSize;
+	for (int i = 0; i < worldCloud->points.size(); i++) {
+		PointXYZ p = worldCloud->points[i];
+		int x = ceil((p.x - minPoint.x) / gridSize);  // Convert to grid coordinate
+		int y = ceil((p.y - minPoint.y) / gridSize);
+		int z = ceil((p.z - minPoint.z) / gridSize);
+		// set a point and its surrounding to be blocked
+		world.markPositionCube(Point3DInt(x, y, z), blockRadius, true);
+	}
+
+	// Read capture points from file
+	PointCloud<PointXYZ>::Ptr captureCloud(new PointCloud<PointXYZ>);
+	pcl::io::loadPCDFile("..\\..\\IndoorData\\capturepoint_test.pcd", *captureCloud);
+	std::vector<Point3DInt> verticesFree; // non blocking capture points
+	std::vector<Point3DInt> verticesTrans;  // non blocking capture points in grid coordinate
+
+	for (int i = 0; i < captureCloud->size();i++)
 	{
-		Mat src = cv::imread(getInFile(f));
-		Mat src_gray;
-		cv::imshow("src", src);
+		PointXYZ p = captureCloud->points[i];
+		int x = ceil((p.x - minPoint.x) / gridSize); // convert capture points to grid coordinate
+		int y = ceil((p.y - minPoint.y) / gridSize);
+		int z = ceil((p.z - minPoint.z) / gridSize);
 
-		//cv::resize(src, src, cv::Size(src.cols / 2, src.rows / 2), INTER_NEAREST);
-		cv::cvtColor(src, src_gray, COLOR_BGR2GRAY);
-
-		vector<Vec2f> lines;
-		int64 t1 = cv::getTickCount();
-		HoughLines(src_gray, lines, 1, CV_PI / 180, 100, 0, 0);
-		int64 t2 = cv::getTickCount();
-		double run_Time = (t2 - t1) / cv::getTickFrequency();
-		std::cout << run_Time << "ms \n";
-
-		// draw lines
-		for (size_t i = 0; i < 1; i++)
-		{
-			float rho = lines[i][0], theta = lines[i][1];
-			Point pt1, pt2;
-			std::cout << theta * 180 / CV_PI <<endl;
-			double a = cos(theta), b = sin(theta);
-			double x0 = a*rho, y0 = b*rho;
-			pt1.x = cvRound(x0 + 1000 * (-b));
-			pt1.y = cvRound(y0 + 1000 * (a));
-			pt2.x = cvRound(x0 - 1000 * (-b));
-			pt2.y = cvRound(y0 - 1000 * (a));
-			line(src, pt1, pt2, Scalar(0, 0, 255), 3, CV_AA);
+		if (world.positionIsFree(Point3DInt(x, y, z))) {
+			verticesTrans.push_back(Point3DInt(x, y, z));  // non blocking capture points
+			verticesFree.push_back(Point3DInt(int(p.x), int(p.y), int(p.z)));  // its value in original coordinate
 		}
-		imshow("Detected lines", src);
-		imwrite(getOutFile(f), src);
-		cv::waitKey();
 	}
-}
 
 
-int _tmain(int argc, _TCHAR* argv[])
-{
-	//test();
-	//return 0;
+	///////////////////////////////////////////////////////////////
+	// Find path through all non blocking capture points
+	// If a point is unreachable, save it to file and then skip it 
+	std::cout << "Path finding..." << std::endl;
+	//std::ofstream cpfile;
+	//cpfile.open("UnreachableCapturePoint.txt");
+	std::vector<Point3DInt> waypoints; // vector stores way points
+	PathFinder pathFinder(a, b, c);
+	std::list<SearchNode> path;
+	std::vector<Node> nodes;
+	for (int i = 0; i < verticesTrans.size() - 1; i++) {
+		PCL_INFO("node %d / %d ... \n", i, verticesTrans.size());
 
-	Mat src = cv::imread(getInFile(0));
-	Mat src_gray;
-	cv::imshow("src",src);
-	//cv::waitKey();
+		Node node;
+		node.index = i;
+		node.x = verticesFree[i].x();
+		node.y = verticesFree[i].y();
+		node.z = verticesFree[i].z();
 
-	//cv::resize(src, src, cv::Size(src.cols / 2, src.rows / 2), INTER_NEAREST);
-	cv::cvtColor(src, src_gray, COLOR_BGR2GRAY);
+		//		std::cout << i << " of " << verticesTrans.size() - 1 << std::endl;
+		for (int j = 0; j < verticesTrans.size() - 1; j++) {  // should be refined to be more efficient
+			path = pathFinder.findPath(world, verticesTrans[i], verticesTrans[j]);
 
-	vector<Vec2f> lines;
-	int64 t1 = cv::getTickCount();
-	HoughLines(src_gray, lines, 1, CV_PI / 180, 100, 0, 0);
-	int64 t2 = cv::getTickCount();
-	double run_Time = (t2 - t1) / cv::getTickFrequency();
-	std::cout << run_Time << "ms \n";
-	
-	// draw lines
-	for (size_t i = 0; i < 1; i++)
-	{
-		float rho = lines[i][0], theta = lines[i][1];
-		
-		Point pt1, pt2;
-		double a = cos(theta), b = sin(theta);
-		double x0 = a*rho, y0 = b*rho;
-		pt1.x = cvRound(x0 + 1000 * (-b));
-		pt1.y = cvRound(y0 + 1000 * (a));
-		pt2.x = cvRound(x0 - 1000 * (-b));
-		pt2.y = cvRound(y0 - 1000 * (a));
-		line(src, pt1, pt2, Scalar(0, 0, 255), 3, CV_AA);
+			if (path.size() == 0) { // No path found
+				std::cout << "Path not found..." << std::endl;
+				int wpX = verticesTrans[j].x() * gridSize + minPoint.x;
+				int wpY = verticesTrans[j].y() * gridSize + minPoint.y;
+				int wpZ = verticesTrans[j].z() * gridSize + minPoint.z;
+				node.path_to.push_back(Point3DInt(wpX, wpY, wpZ));
+
+				// Add a very large cost value for this path
+				node.cost_to.push_back(DBL_MAX);
+
+				// save unreachable point to file for reference
+				//cpfile << wpX << " " << wpY << " " << wpZ << std::endl;
+			}
+			else {  // Path found -> store path to waypoint
+				SearchNode *snode = &path.back(); // get the last node ( = start point of path)
+				//			std::cout << "=== Cost: " << snode->cost << "- Pathcost:" << snode->pathCost << std::endl;
+				node.cost_to.push_back(snode->pathCost);
+
+				while (snode->next != nullptr) {
+					snode = snode->next;
+					//				std::cout << snode->cost << "- Pathcost:" << snode->pathCost << std::endl;
+					int wpX = snode->position.x() * gridSize + minPoint.x;
+					int wpY = snode->position.y() * gridSize + minPoint.y;
+					int wpZ = snode->position.z() * gridSize + minPoint.z;
+					node.path_to.push_back(Point3DInt(wpX, wpY, wpZ));
+				}
+			}
+		}
+		nodes.push_back(node);
 	}
-	cout << lines[0][1] * 180 / CV_PI << endl;
-	imshow("Detected lines", src);
-	cv::waitKey();
-	
+	//cpfile.close();
+	PCL_INFO("End Astar. \n");
+	_getch();
+
+	//viewer->addCube(minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z, 1, 0, 0, "Bound");
+	//viewer->setShapeRenderingProperties(PCL_VISUALIZER_REPRESENTATION, PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "Bound");
+	////viewer->addPointCloud(worldCloud,"world");
+
+	//viewer->addPointCloud(captureCloud,"points");
+
+	//while (!viewer->wasStopped())
+	//{
+	//	viewer->spinOnce(100);
+	//	boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+	//}
 	return 0;
 }
-
