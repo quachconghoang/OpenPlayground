@@ -11,6 +11,9 @@
 #include "PathFinder.h"
 #include "SearchNode.h"
 
+#include "..\Lib_D-PSO\Swarm.h"
+
+using namespace ASTAR;
 using namespace pcl;
 using namespace pcl::visualization;
 
@@ -75,54 +78,55 @@ int main()
 		}
 	}
 
-
 	///////////////////////////////////////////////////////////////
 	// Find path through all non blocking capture points
-	// If a point is unreachable, save it to file and then skip it 
 	std::cout << "Path finding..." << std::endl;
-	//std::ofstream cpfile;
-	//cpfile.open("UnreachableCapturePoint.txt");
+
 	std::vector<Point3DInt> waypoints; // vector stores way points
+
 	PathFinder pathFinder(a, b, c);
+
 	std::list<SearchNode> path;
 	std::vector<Node> nodes;
+
+	//Node test:
+
+	//Node tNode;
+	//tNode = 
+
 	for (int i = 0; i < verticesTrans.size() - 1; i++) {
-		PCL_INFO("node %d / %d ... \n", i, verticesTrans.size());
+		PCL_INFO("node %d / %d ... \n", i+1, verticesTrans.size()-1);
 
 		Node node;
 		node.index = i;
-		node.x = verticesFree[i].x();
-		node.y = verticesFree[i].y();
-		node.z = verticesFree[i].z();
+		node.x = verticesFree[i][0];
+		node.y = verticesFree[i][1];
+		node.z = verticesFree[i][2];
 
-		//		std::cout << i << " of " << verticesTrans.size() - 1 << std::endl;
-		for (int j = 0; j < verticesTrans.size() - 1; j++) {  // should be refined to be more efficient
+		for (int j = 0; j < verticesTrans.size() - 1; j++) 
+		{
 			path = pathFinder.findPath(world, verticesTrans[i], verticesTrans[j]);
 
-			if (path.size() == 0) { // No path found
+			if (path.size() == 0) 
+			{
 				std::cout << "Path not found..." << std::endl;
-				int wpX = verticesTrans[j].x() * gridSize + minPoint.x;
-				int wpY = verticesTrans[j].y() * gridSize + minPoint.y;
-				int wpZ = verticesTrans[j].z() * gridSize + minPoint.z;
+				int wpX = verticesTrans[j][0] * gridSize + minPoint.x;
+				int wpY = verticesTrans[j][1] * gridSize + minPoint.y;
+				int wpZ = verticesTrans[j][2] * gridSize + minPoint.z;
 				node.path_to.push_back(Point3DInt(wpX, wpY, wpZ));
 
-				// Add a very large cost value for this path
 				node.cost_to.push_back(DBL_MAX);
-
-				// save unreachable point to file for reference
-				//cpfile << wpX << " " << wpY << " " << wpZ << std::endl;
 			}
-			else {  // Path found -> store path to waypoint
-				SearchNode *snode = &path.back(); // get the last node ( = start point of path)
-				//			std::cout << "=== Cost: " << snode->cost << "- Pathcost:" << snode->pathCost << std::endl;
+			else 
+			{
+				SearchNode *snode = &path.back();
 				node.cost_to.push_back(snode->pathCost);
 
 				while (snode->next != nullptr) {
 					snode = snode->next;
-					//				std::cout << snode->cost << "- Pathcost:" << snode->pathCost << std::endl;
-					int wpX = snode->position.x() * gridSize + minPoint.x;
-					int wpY = snode->position.y() * gridSize + minPoint.y;
-					int wpZ = snode->position.z() * gridSize + minPoint.z;
+					int wpX = snode->position[0] * gridSize + minPoint.x;
+					int wpY = snode->position[1] * gridSize + minPoint.y;
+					int wpZ = snode->position[2] * gridSize + minPoint.z;
 					node.path_to.push_back(Point3DInt(wpX, wpY, wpZ));
 				}
 			}
@@ -131,8 +135,43 @@ int main()
 	}
 	//cpfile.close();
 	PCL_INFO("End Astar. \n");
+
+	std::cout << "Running PSO..." << std::endl;
+	int particle_count = 100;
+	double self_trust = 0; // c1
+	double past_trust = 0.5; // parameter for personal best (c2)
+	double global_trust = 0.5; // parameter for global best (c3)
+
+	// Init swarm parameters
+	Swarm s(particle_count, self_trust, past_trust, global_trust);
+	
+	//Copy Nodes to D-PSO nodes
+	for (int i = 0; i < nodes.size();i++)
+	{
+		ASTAR::Node a_node = nodes[i];
+		GpuNode gpu_node;
+		gpu_node.index = i;
+
+		gpu_node.x = a_node.x;
+		gpu_node.y = a_node.y;
+		gpu_node.z = a_node.z;
+
+		PCL_WARN("\nNODE %d : \n", i);
+		for (int j = 0; j < a_node.cost_to.size(); j++)
+		{
+			gpu_node.cost_to.push_back(a_node.cost_to[j]);
+			PCL_INFO("- %.1f ", gpu_node.cost_to[j]);
+		}
+		s.nodes.push_back(gpu_node);
+	}
+
+	PCL_WARN("End loading ... \nPress any key to start D_PSO.\n");
 	_getch();
 
+	s.assign_particle_positions();
+	double val = s.solve();
+	std::cout << "Finished!! Press to exit..." << std::endl;
+	_getch();
 	//viewer->addCube(minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z, 1, 0, 0, "Bound");
 	//viewer->setShapeRenderingProperties(PCL_VISUALIZER_REPRESENTATION, PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "Bound");
 	////viewer->addPointCloud(worldCloud,"world");

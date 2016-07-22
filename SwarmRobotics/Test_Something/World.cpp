@@ -47,7 +47,7 @@ World::World(int width, int height, int depth) {
 // Mark a position as blocked or free
 void World::markPosition(Point3DInt position, bool value)
 {
-	int idx = offsetIdx + position.x() + (position.y() + position.z() * sy) * sx;
+	int idx = offsetIdx + position[0] + (position[1] + position[2] * sy) * sx;
 	if (idx > offsetIdx && idx < maxIdx)	worldBlocked[idx] = value;
 }
 
@@ -55,15 +55,15 @@ void World::markPosition(Point3DInt position, bool value)
 void World::markPositionCube(Point3DInt centerPos, int cubeRadius, bool value)
 {
 	int yInc, zInc;
-	int centerIndex = offsetIdx + centerPos.x() + (centerPos.y() + centerPos.z() * sy) * sx;
+	int centerIndex = offsetIdx + centerPos[0] + (centerPos[1] + centerPos[2] * sy) * sx;
 	for (int i = -cubeRadius; i <= cubeRadius; i++) 
-		if ((centerPos.z() + i) >= getFront() && (centerPos.z() + i) <= getBack()) {
+		if ((centerPos[2] + i) >= getFront() && (centerPos[2] + i) <= getBack()) {
 			zInc = i*sy*sx;
 			for (int j = -cubeRadius; j <= cubeRadius; j++)
-				if ((centerPos.y() + j) >= getBottom() && (centerPos.y() + j) <= getTop()) {
+				if ((centerPos[1] + j) >= getBottom() && (centerPos[1] + j) <= getTop()) {
 					yInc = j*sx; 
 					for (int k = -cubeRadius; k <= cubeRadius; k++)
-						if ((centerPos.x() + k) >= getLeft() && (centerPos.x() + k) <= getRight())
+						if ((centerPos[0] + k) >= getLeft() && (centerPos[0] + k) <= getRight())
 							worldBlocked[centerIndex + k + yInc + zInc] = value;
 				}
 		}
@@ -71,12 +71,12 @@ void World::markPositionCube(Point3DInt centerPos, int cubeRadius, bool value)
 
 void World::markPositionEx(Point3DInt position, bool value)
 {
-	worldBlocked[position.x() + (position.y() + position.z() * sy) * sx] = value;
+	worldBlocked[position[0] + (position[1] + position[2] * sy) * sx] = value;
 }
 
 bool World::positionIsFree(Point3DInt position)
 {
-	return !worldBlocked[offsetIdx + position.x() + (position.y() + position.z() * sy) * sx];
+	return !worldBlocked[offsetIdx + position[0] + (position[1] + position[2] * sy) * sx];
 }
 
 const int World::getLeft() {

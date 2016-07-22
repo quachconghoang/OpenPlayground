@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimCUDA", "SimCUDA\SimCUDA.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Something", "Test_Something\Test_Something.vcxproj", "{FC2C1362-690E-4A72-81D4-734F6B57E3FE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lib_D-PSO", "Lib_D-PSO\Lib_D-PSO.vcxproj", "{0A2D695D-80B5-4878-BD5F-2833A8D37B84}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Debug|x64.Build.0 = Debug|x64
 		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Release|x64.ActiveCfg = Release|x64
 		{FC2C1362-690E-4A72-81D4-734F6B57E3FE}.Release|x64.Build.0 = Release|x64
+		{0A2D695D-80B5-4878-BD5F-2833A8D37B84}.Debug|x64.ActiveCfg = Debug|x64
+		{0A2D695D-80B5-4878-BD5F-2833A8D37B84}.Debug|x64.Build.0 = Debug|x64
+		{0A2D695D-80B5-4878-BD5F-2833A8D37B84}.Release|x64.ActiveCfg = Release|x64
+		{0A2D695D-80B5-4878-BD5F-2833A8D37B84}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
