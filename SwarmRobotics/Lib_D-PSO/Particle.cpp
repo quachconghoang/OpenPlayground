@@ -14,6 +14,7 @@ double Particle::move(){
 //	std::cout << "Value after move: " << this->calculate_value() << std::endl;
 
 	opt_improvement();
+
 //	std::cout << "Value after Opt: " << this->calculate_value() << std::endl;
 
 	double new_value = this->calculate_value();
@@ -53,7 +54,7 @@ void Particle::calculate_new_velocity(Position global_best){
 		a = (this->velocity * this->self_trust); // self velocity component
 	}
 
-	Velocity b = ((this->best_position-this->position) * this->past_trust );  // personal best velocity component << lack of random coefficient
+	Velocity b = ((this->best_position - this->position) * this->past_trust );  // personal best velocity component << lack of random coefficient
 	Velocity c = ((global_best-this->position) * this->global_trust);		// global best component << lack of random coefficient
 
 	//std::cout << a.to_string();

@@ -5,6 +5,16 @@
 #include <conio.h>
 #include "KernelCu.h"
 
+void loadGraphToFile()
+{
+
+}
+
+void loadGraphToDevice()
+{
+
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	const int arraySize = 5;

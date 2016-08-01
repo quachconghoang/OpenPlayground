@@ -29,11 +29,6 @@ struct GpuNode
 	std::vector<double> cost_to;
 };
 
-struct CpuNode
-{
-
-};
-
 // A position is an array of nodes representing the vertices that salesman need to go through alternatively
 class Position{
 public:

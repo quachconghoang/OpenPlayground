@@ -1,3 +1,6 @@
+#ifndef SWARM
+#define SWARM
+
 #include "particle.h"
 //#include "node.h"
 #include <string>
@@ -5,9 +8,6 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
-
-#ifndef SWARM
-#define SWARM
 
 class Swarm{
 public:
@@ -24,11 +24,8 @@ public:
 	Position best_position;
 private:
 	bool normal_search();
-	bool lazy_descent();
-	bool energetic_descent();
 
 	void particles_back_to_best();
-	bool move_all_slowly();
 
 	Swarm();//shouldn't be using this
 	std::string trim(std::string);

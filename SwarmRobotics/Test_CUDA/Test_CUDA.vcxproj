@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{FC2C1362-690E-4A72-81D4-734F6B57E3FE}</ProjectGuid>
+    <ProjectGuid>{1C2A75C6-8BEE-4B4F-8E12-ADE86844A004}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Test_Something</RootNamespace>
+    <RootNamespace>Test_CUDA</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -30,16 +30,16 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\PropertySheets\cv64-VS2013.props" />
-    <Import Project="..\..\PropertySheets\PCL-180.props" />
+    <Import Project="..\..\PropertySheets\CudaSDK.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\PropertySheets\cv64-VS2013.props" />
-    <Import Project="..\..\PropertySheets\PCL-180.props" />
+    <Import Project="..\..\PropertySheets\CudaSDK.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,29 +80,26 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MinHeap.h" />
-    <ClInclude Include="PathFinder.h" />
-    <ClInclude Include="SearchNode.h" />
+    <ClInclude Include="GPU_Particle.h" />
+    <ClInclude Include="GPU_Swarm.h" />
+    <ClInclude Include="GraphGPU.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MinHeap.cpp" />
-    <ClCompile Include="PathFinder.cpp" />
-    <ClCompile Include="SearchNode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Test_Something.cpp" />
-    <ClCompile Include="World.cpp" />
+    <ClCompile Include="Test_CUDA.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Lib_D-PSO\Lib_D-PSO.vcxproj">
-      <Project>{0a2d695d-80b5-4878-bd5f-2833a8d37b84}</Project>
-    </ProjectReference>
+    <CudaCompile Include="GPU_Particle.cu" />
+    <CudaCompile Include="GPU_Swarm.cu" />
+    <CudaCompile Include="GraphGPU.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
+  </ImportGroup>
 </Project>
