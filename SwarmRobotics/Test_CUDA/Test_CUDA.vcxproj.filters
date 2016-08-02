@@ -30,9 +30,6 @@
     <ClInclude Include="GPU_Swarm.h">
       <Filter>CUDA files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphGPU.h">
-      <Filter>CUDA files</Filter>
-    </ClInclude>
     <ClInclude Include="GPU_Particle.h">
       <Filter>CUDA files</Filter>
     </ClInclude>
@@ -47,9 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="GPU_Swarm.cu">
-      <Filter>CUDA files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="GraphGPU.cu">
       <Filter>CUDA files</Filter>
     </CudaCompile>
     <CudaCompile Include="GPU_Particle.cu">

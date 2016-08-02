@@ -7,9 +7,8 @@
 #include <fstream>
 #include <vector>
 
-#include "GraphGPU.h"
+//#include "GraphGPU.h"
 #include "GPU_Swarm.h"
-#include "thrust/version.h"
 
 #define NUM_PARTICLES 64
 using namespace DPSO;
@@ -24,7 +23,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	SwarmCuda cuSwarm(particle_count, self_trust, past_trust, global_trust);
 	cuSwarm.read_graph_definition("..//..//IndoorData//AstarGraph.txt");
-	//std::cout << "Thrust: " << THRUST_MAJOR_VERSION << "." << THRUST_MINOR_VERSION << std::endl;
+
+	cuSwarm.assign_particle_positions();
+	//cuSwarm.shuffle();
+	//cuSwarm.testSwarmAction();
 	_getch();
 
 	return 0;

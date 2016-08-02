@@ -36,18 +36,29 @@ namespace DPSO
 		SwarmCuda(int particle_count, float self_trust, float past_trust, float global_trust);
 
 		void read_graph_definition(std::string filename);
-		
+		void assign_particle_positions();
+
 		std::vector<GraphNode> graphCPU;
 		GraphGPU graphGPU;
 
-		double best_value;
-		Position best_position;
+		thrust::device_vector<Particle> gpuParticles;
 
+		thrust::device_vector<int> position_Sink;
+		thrust::device_vector<int> best_position_Sink;
+
+		thrust::device_vector<int> velocity_Sink;
+
+		float best_value;
+		thrust::host_vector<int> best_position;
+
+		void testSwarmAction();
+		float checkParticle();
 	private:
-		double self_trust;
-		double past_trust;
-		double global_trust;
+		float self_trust;
+		float past_trust;
+		float global_trust;
 		int particle_count;
+		std::vector<int> shuffle();
 	};
 }
 
