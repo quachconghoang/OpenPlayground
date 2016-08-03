@@ -37,9 +37,7 @@ __global__ void CalculateValue_Kernel(float * inGraph, DPSO::Particle * p)
 	
 	int offsetID = _par->graphOffset;
 	int nodeCount = _par->positionSize;
-	
-	//thrust::device_ptr<int> dev_ptr = thrust::device_pointer_cast(_par->positionData);
-	
+
 	int _psoValue = 0;
 	for (int i = 0; i < nodeCount-1; i++)
 	{
@@ -60,6 +58,117 @@ __global__ void CalculateValue_Kernel(float * inGraph, DPSO::Particle * p)
 	if (_psoValue < _par->bestValue )
 	{
 		_par->bestValue = _psoValue;
+		for (int i = 0; i < _par->positionSize;i++)
+		{
+			_par->bestPosition[i] = _par->positionData[i];
+		}
+	}
+}
+
+__global__ void Calculate_Velocity_Kernel(float * inGraph, DPSO::Particle * p, int bestParticleID)
+{
+	/// 0. Load best
+	__shared__ int best[1024];
+	DPSO::Particle * _bestPar = &p[bestParticleID];
+	for (int i = 0; i < _bestPar->positionSize;i++)
+	{
+		best[i] = _bestPar->bestPosition[i];
+	}
+	__syncthreads();
+
+	/// 1. Calculate new velocities from best-position & trust values (c2 & c3)
+	//	DPSO::D_Vec2i test_Velocity;
+	//		1a. Vec = Pos_best - Pos_Current
+	//		1b. NewVec = OldVec * c2 + GlobVec * c3 ~ Crossover
+	int pID = threadIdx.x + blockIdx.x*blockDim.x;
+	DPSO::Particle * _par = &p[pID];
+	
+	int posSize = _par->positionSize;
+	int _velocitySize = 0;
+
+	// Get velocity from C2: past-trust
+	int c2Size = ceilf(posSize *_par->past_trust);
+	for (int i = 0; i < c2Size; i++)
+	{
+		int look_for_ID = _par->positionData[i];
+		int found_at = -1;
+		for (int j = 0; j < posSize; j++)
+		{
+			if (look_for_ID == _par->positionData[j])	{	found_at = j;	break;	}
+		}
+
+		if ((i != found_at) && (found_at != -1))
+		{
+			_par->velocity[i].from = i;
+			_par->velocity[i].to = found_at;
+			_velocitySize++;
+		}
+	}
+
+	// Get velocity from C3: global-trust
+	int v_offset = _velocitySize;
+	int c3Size = ceilf(posSize*_par->global_trust);
+	for (int i = 0; i < c3Size; i++)
+	{
+		int look_for_ID = _par->positionData[i];
+		int found_at = -1;
+		for (int j = 0; j < posSize; j++)
+		{
+			if (look_for_ID == best[j])	{ found_at = j;	break; }
+		}
+
+		if ((i != found_at) && (found_at != -1))
+		{
+			int vID = v_offset + i;
+			_par->velocity[vID].from = i;
+			_par->velocity[vID].to = found_at;
+			_velocitySize++;
+		}
+	}
+
+	_par->velocitySize = _velocitySize;
+	//printf("Thread: %d - c1 velocity_size %d \n", pID, _velocitySize);
+
+	/// 2. Calculate best position from new velocities
+	//		2a. Check all velocity
+	//		2b. Swap node positions
+
+	for (int i = 0; i < _velocitySize; i++)
+	{
+		DPSO::D_Vec2i swapVal = _par->velocity[i];
+		int tmp = _par->positionData[swapVal.from];
+		_par->positionData[swapVal.from] = _par->positionData[swapVal.to];
+		_par->positionData[swapVal.to] = tmp;
+	}
+
+	/// 3. Two opt
+
+
+	/// 4. Calculate Values
+	int offsetID = _par->graphOffset;
+	int nodeCount = _par->positionSize;
+	int _psoValue = 0;
+	for (int i = 0; i < nodeCount - 1; i++)
+	{
+		int fromNodeID = _par->positionData[i];
+		int toNodeID = _par->positionData[i + 1];
+		float dist = inGraph[offsetID + fromNodeID*nodeCount + toNodeID];
+		_psoValue += dist;
+	}
+	//Calculate last node
+	int fromNodeID = _par->positionData[nodeCount - 1];
+	int toNodeID = _par->positionData[0];
+	_psoValue += inGraph[offsetID + fromNodeID*nodeCount + toNodeID];
+	_par->psoResult = _psoValue;
+
+	//Update Local-best
+	if (_psoValue < _par->bestValue)
+	{
+		_par->bestValue = _psoValue;
+		for (int i = 0; i < _par->positionSize; i++)
+		{
+			_par->bestPosition[i] = _par->positionData[i];
+		}
 	}
 }
 
@@ -83,18 +192,21 @@ namespace DPSO
 	void SwarmCuda::assign_particle_positions()
 	{
 		int gSize = graphGPU.num_nodes * graphGPU.num_edgesPerNode;
-		int pSize = graphGPU.num_edgesPerNode;
+		int pSize = graphGPU.num_nodes;
 		
 		position_Sink.resize(pSize * particle_count);
 		best_position_Sink.resize(pSize * particle_count);
-		
+		velocity_Sink.resize(pSize*particle_count);
+
 		best_value = -1;
-		best_position.resize(graphGPU.num_nodes);
 
 		for (size_t i = 0; i < particle_count; i++)
-		{
-			//thrust::fill(position_Sink.begin() + i*pSize, position_Sink.begin() + (i + 1)*pSize, i);
-			
+		{	
+			//thrust::fill(position_Sink.begin() + i*pSize, position_Sink.begin() + (i + 1)*pSize, -1);
+			//thrust::fill(best_position_Sink.begin() + i*pSize, best_position_Sink.begin() + (i + 1)*pSize, -1);
+			//DPSO::D_Vec2i v_i; v_i.from = 0; v_i.to = 0;
+			//thrust::fill(velocity_Sink.begin() + i*pSize, velocity_Sink.begin() + (i + 1)*pSize, v_i);
+
 			Particle _p;
 			_p.pIndex = i;
 			_p.graphOffset = i*gSize;
@@ -102,6 +214,7 @@ namespace DPSO
 			_p.positionOffset = i*pSize;
 			_p.psoResult = -1;
 			_p.bestValue = std::numeric_limits<float>::max();
+			_p.velocitySize = 0;
 
 			_p.self_trust = this->self_trust;
 			_p.past_trust = this->past_trust;
@@ -109,6 +222,8 @@ namespace DPSO
 
 			thrust::device_ptr<int> dev_ptr = &position_Sink[i*pSize];
 			_p.positionData = thrust::raw_pointer_cast(dev_ptr);
+			_p.bestPosition = thrust::raw_pointer_cast(&best_position_Sink[i*pSize]);
+			_p.velocity = thrust::raw_pointer_cast(&velocity_Sink[i*pSize]);
 			
 			std::vector<int> newPos = shuffle();
 			thrust::copy(newPos.begin(), newPos.end(), dev_ptr);
@@ -116,44 +231,38 @@ namespace DPSO
 			gpuParticles.push_back(_p);
 		}
 
-		/*for (int i = 0; i < particle_count; i++)
-		{
-			Particle _p = gpuParticles[i];
-			thrust::device_ptr<int> dev_ptr(_p.positionData);
-			thrust::device_vector<int> dev_vec(dev_ptr, dev_ptr + pSize);
-
-			std::cout << "Particle : " << i << std::endl;
-			for (int j = 0; j < pSize; j++)
-			{
-				std::cout << dev_vec[j] << " ";
-			}
-			std::cout << std::endl;
-		}*/
-
+		//showParticleData();
 		std::cout << "Assigned! \n";
 
 		int threadsPerBlock = particle_count;
 		float * raw_graph_ptr = thrust::raw_pointer_cast(graphGPU.graphData.data());
 		DPSO::Particle * parts = thrust::raw_pointer_cast(gpuParticles.data());
-		CalculateValue_Kernel <<< 1, threadsPerBlock >> >(raw_graph_ptr, parts);
+		CalculateValue_Kernel <<< 1,threadsPerBlock >>>(raw_graph_ptr, parts);
+
 		std::cout << "First iteration \n";
 
-		/// - TRACING
-		for (int j = 0; j < particle_count; j++)
-		{
-			Particle _p = gpuParticles[j];
-			std::cout << "P0[" << j << "] = " << _p.psoResult << std::endl;
-		}
-
 		/// - Can be replace with shared memory in Kernel ???
-		int64_t minEle = thrust::min_element(gpuParticles.begin(), gpuParticles.end()) - gpuParticles.begin();
-		Particle tPar = gpuParticles[minEle];
+		bestParticleNum = int(thrust::min_element(gpuParticles.begin(), gpuParticles.end()) - gpuParticles.begin());
+		//Particle tPar = gpuParticles[minEle];
+		//std::cout << "Min element P[" << minEle << "] = " << tPar.bestValue << std::endl;
 
-		thrust::copy(position_Sink.begin() + tPar.positionOffset,
-			position_Sink.begin() + tPar.positionOffset + tPar.positionSize,
-			best_position.begin());
+		//thrust::copy(position_Sink.begin() + tPar.positionOffset,
+		//	position_Sink.begin() + tPar.positionOffset + tPar.positionSize,
+		//	best_GB_position_Sink.begin());
 
-		std::cout << "Min element P[" << minEle << "] = " << tPar.bestValue << std::endl;
+		//move_particle();
+		//showParticleData();
+	}
+
+	void SwarmCuda::move_particle()
+	{
+		int threadsPerBlock = particle_count;
+		float * raw_graph_ptr = thrust::raw_pointer_cast(graphGPU.graphData.data());
+		DPSO::Particle * parts = thrust::raw_pointer_cast(gpuParticles.data());
+		Calculate_Velocity_Kernel << < 1, threadsPerBlock >> >(raw_graph_ptr, parts, bestParticleNum);
+		cudaDeviceSynchronize();
+
+		showParticleData();
 	}
 
 	std::vector<int> SwarmCuda::shuffle()
@@ -193,6 +302,46 @@ namespace DPSO
 
 		//size_t max_ele = thrust::max_element(gpuParticles.begin(), gpuParticles.end()) - gpuParticles.begin();
 		//std::cout << "Max element = " << max_ele << std::endl;
+	}
+
+	void SwarmCuda::showParticleData()
+	{
+		int pSize = graphGPU.num_edgesPerNode;
+
+		for (int i = 0; i < particle_count; i++)
+		{
+			Particle _p = gpuParticles[i];
+			thrust::device_ptr<int> dev_ptr(_p.positionData);
+			thrust::device_vector<int> dev_vec(dev_ptr, dev_ptr + pSize);
+
+			std::cout << "Particle : " << i << std::endl;
+			std::cout << " - Nodes: ";
+			for (int j = 0; j < pSize; j++)
+			{
+				std::cout << dev_vec[j] << " ";
+			}
+			std::cout << std::endl;
+
+			thrust::device_ptr<int> ptr2(_p.bestPosition);
+			thrust::device_vector<int> vec2(ptr2, ptr2 + pSize);
+			std::cout << " - BestPosition: ";
+			for (int j = 0; j < pSize; j++)
+			{
+				std::cout << vec2[j] << " ";
+			}
+			std::cout << std::endl;
+
+			thrust::device_ptr<DPSO::D_Vec2i> ptr3(_p.velocity);
+			thrust::device_vector<DPSO::D_Vec2i> vec3(ptr3, ptr3 + pSize);
+			std::cout << " - VelocitySize : " << _p.velocitySize << std::endl;
+			std::cout << " - Velocity: ";
+			for (int j = 0; j < pSize; j++)
+			{
+				DPSO::D_Vec2i v = vec3[j];
+				std::cout << v.from << "-" << v.to << " ";
+			}
+			std::cout << std::endl;
+		}
 	}
 }
 

@@ -8,6 +8,12 @@
 
 namespace DPSO
 {
+	struct D_Vec2i
+	{
+		int from;
+		int to;
+	};
+
 	// Create struct object to sorting by THRUST
 	struct Particle
 	{
@@ -19,13 +25,15 @@ namespace DPSO
 		int positionSize;
 		int * positionData;
 		
-		
 		float self_trust;
 		float past_trust;
 		float global_trust;
 
 		float bestValue;
 		int * bestPosition;
+
+		int velocitySize;
+		D_Vec2i * velocity;
 		
 		float psoResult;
 

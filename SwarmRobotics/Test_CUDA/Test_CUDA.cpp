@@ -27,6 +27,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	cuSwarm.assign_particle_positions();
 	//cuSwarm.shuffle();
 	//cuSwarm.testSwarmAction();
+	//_getch();
+
+	cuSwarm.move_particle();
+	//cuSwarm.showParticleData();
 	_getch();
 
 	return 0;

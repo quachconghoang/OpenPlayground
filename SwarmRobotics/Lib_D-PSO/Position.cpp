@@ -49,16 +49,17 @@ Velocity Position::operator-(const Position &p){
             if(tmp_pos.nodes[j].index == look_for.index){
                 found_at = j;
 
-				GpuNode tmp = p.nodes[i];
-				tmp_pos.nodes[i] = tmp_pos.nodes[j];
-				tmp_pos.nodes[j] = tmp;
-                break;
+				///Swap i-j ??? for what
+				//GpuNode tmp = p.nodes[i];
+				//tmp_pos.nodes[i] = tmp_pos.nodes[j];
+				//tmp_pos.nodes[j] = tmp;
+				break;
             }
         }
 
-        if( i != found_at && found_at != -1 ){
+        if( (i != found_at) && (found_at != -1) ){
             difference.add_transposition(i,found_at);
-        }
+		}
     }
 
     return difference;
