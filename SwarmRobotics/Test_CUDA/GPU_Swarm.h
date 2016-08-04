@@ -37,7 +37,9 @@ namespace DPSO
 
 		void read_graph_definition(std::string filename);
 		void assign_particle_positions();
-		void move_particle();
+
+		void solve();
+		bool move_particle();
 
 		std::vector<GraphNode> graphCPU;
 		GraphGPU graphGPU;
@@ -48,20 +50,15 @@ namespace DPSO
 
 		thrust::device_vector<int> position_Sink;
 		thrust::device_vector<int> best_position_Sink;
-
 		thrust::device_vector<D_Vec2i> velocity_Sink;
 
-
-		void testSwarmAction();
-		float checkParticle();
+		void showParticleData();
 	private:
 		float self_trust;
 		float past_trust;
 		float global_trust;
 		int particle_count;
 		std::vector<int> shuffle();
-
-		void showParticleData();
 	};
 }
 

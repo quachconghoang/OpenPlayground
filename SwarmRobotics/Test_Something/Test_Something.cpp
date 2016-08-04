@@ -169,7 +169,7 @@ void astarPathFinding()
 int main()
 {
 	std::cout << "Running PSO..." << std::endl;
-	int particle_count = 100;
+	int particle_count = 128;
 	double self_trust = 0; // c1
 	double past_trust = 0.5; // parameter for personal best (c2)
 	double global_trust = 0.5; // parameter for global best (c3)

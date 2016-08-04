@@ -20,6 +20,7 @@ namespace DPSO
 		int pIndex;
 
 		int graphOffset;
+		float * graphData;
 
 		int positionOffset;
 		int positionSize;

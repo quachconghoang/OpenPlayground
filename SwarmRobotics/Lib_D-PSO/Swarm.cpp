@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Swarm.h"
 #include <time.h>
+#include "opencv2/opencv.hpp"
 
 Swarm::Swarm(int particle_count, float self_trust, float past_trust, float global_trust){
 	this->particle_count = particle_count;
@@ -13,11 +14,16 @@ Swarm::Swarm(int particle_count, float self_trust, float past_trust, float globa
 double Swarm::solve(){
 	int moves_since_best_changed = 0;
 
+	int64 startTime = cv::getCPUTickCount();
+	int iterations = 0;
+	int stoppingCount = 10;
+
 	// if the cost does not change after 4 times -> finished
-	while(moves_since_best_changed <= 4){
+	while (moves_since_best_changed <= stoppingCount){
 		bool best_changed = false;
-		
-		if( moves_since_best_changed < 4 ){  // if cost changing steadily
+		iterations++;
+
+		if (moves_since_best_changed < stoppingCount){  // if cost changing steadily
 			best_changed = normal_search();
 		}
 
@@ -28,6 +34,10 @@ double Swarm::solve(){
 		}
 		std::cout << "Best value so far: " << this->best_value << std::endl;
 	}
+
+	int64 stopTime = cv::getCPUTickCount();
+	double timeR = (stopTime - startTime) / cv::getTickFrequency();
+	std::cout << "CPU Runtime = " << timeR << "\n Average = " << timeR / iterations <<std::endl;
 	return this->best_value;
 }
 
