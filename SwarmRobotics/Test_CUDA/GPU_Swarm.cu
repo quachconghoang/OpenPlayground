@@ -22,6 +22,16 @@
 
 #include "opencv2/opencv.hpp"
 
+void checkCUDAError(const char *msg)
+{
+	cudaError_t err = cudaGetLastError();
+	if (cudaSuccess != err)
+	{
+		fprintf(stderr, "Cuda error: %s: %s.\n", msg, cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+}
+
 __device__ void calculateValueParticle(DPSO::Particle * _par)
 {
 	int nodeCount = _par->positionSize;
@@ -70,11 +80,6 @@ __device__ float edge_length_swap(int i, int j, int nodeCount, float * _graph)
 	return (edge_length_i + edge_length_j);
 }
 
-//__device__ void calculate_Velocities(DPSO::Particle * _par, int * best)
-//{
-//
-//}
-
 __global__ void CalculateValue_Kernel(DPSO::Particle * p)
 {
 	int pID = threadIdx.x + blockIdx.x*blockDim.x;
@@ -91,6 +96,16 @@ __global__ void Moving_Kernel(DPSO::Particle * p, int bestParticleID)
 	{
 		best[i] = _bestPar->bestPosition[i];
 	}
+	//int pcID = threadIdx.x + blockIdx.x*blockDim.x;
+	//DPSO::Particle * _bestPar = &p[bestParticleID];
+	//int positionSize = _bestPar->positionSize;
+	//int step = 0;
+	//int cpThreadLoc;
+	//while ((cpThreadLoc = pcID + step*NUM_PARTICLES) < positionSize)
+	//{
+	//	best[cpThreadLoc] = _bestPar->bestPosition[cpThreadLoc];
+	//	step++;
+	//}
 	__syncthreads();
 	
 	/// 1. Calculate new velocities from best-position & trust values (c2 & c3)
@@ -202,7 +217,7 @@ namespace DPSO
 		this->self_trust = self_trust;
 		this->past_trust = past_trust;
 		this->global_trust = global_trust;
-		srand(int(time(NULL)));
+		srand(unsigned int(time(NULL)));
 	}
 
 	void SwarmCuda::read_graph_definition(std::string filename)

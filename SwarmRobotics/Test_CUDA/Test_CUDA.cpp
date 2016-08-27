@@ -10,7 +10,7 @@
 //#include "GraphGPU.h"
 #include "GPU_Swarm.h"
 
-#define NUM_PARTICLES 128
+
 using namespace DPSO;
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -22,7 +22,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	float global_trust = 0.5f; // parameter for global best (c3)
 
 	SwarmCuda cuSwarm(particle_count, self_trust, past_trust, global_trust);
-	cuSwarm.read_graph_definition("..//..//IndoorData//AstarGraph-0.txt");
+	cuSwarm.read_graph_definition("..//..//IndoorData//AstarGraph.txt");
 
 	cuSwarm.assign_particle_positions();
 	//cuSwarm.showParticleData();

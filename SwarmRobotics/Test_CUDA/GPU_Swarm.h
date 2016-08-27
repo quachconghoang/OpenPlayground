@@ -25,6 +25,7 @@ struct GraphGPU
 	thrust::device_vector<float> graphData;
 };
 
+#define NUM_PARTICLES 128
 namespace DPSO
 {
 	class SwarmCuda
