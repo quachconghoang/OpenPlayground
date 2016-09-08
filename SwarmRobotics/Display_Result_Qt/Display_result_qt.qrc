@@ -1,4 +1,11 @@
 <RCC>
-    <qresource prefix="Display_Result_Qt">
-    </qresource>
+  <qresource prefix="Display_Result_Qt">
+    <file>Resources/backlines.png</file>
+    <file>Resources/GenMesh.png</file>
+    <file>Resources/open.png</file>
+    <file>Resources/remove.png</file>
+    <file>Resources/select_vertex.png</file>
+    <file>Resources/waypoint_icon.png</file>
+    <file>Resources/waypoint_save_icon.png</file>
+  </qresource>
 </RCC>

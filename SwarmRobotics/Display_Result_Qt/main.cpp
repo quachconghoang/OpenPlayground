@@ -1,4 +1,5 @@
-#include "Display_result_qt.h"
+#include "stdafx.h"
+#include "Display_Result_Qt.h"
 #include <QtWidgets/QApplication>
 
 int main(int argc, char *argv[])

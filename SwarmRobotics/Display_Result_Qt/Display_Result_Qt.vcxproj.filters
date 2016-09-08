@@ -24,50 +24,62 @@
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{a1738f01-178c-4b5e-b860-d3d6c50fb3e3}</UniqueIdentifier>
+      <UniqueIdentifier>{3493c107-3675-4bdb-b1d6-68d182405a64}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{72dab863-f2e5-433f-96ef-ef1b40a08acd}</UniqueIdentifier>
+      <UniqueIdentifier>{2cd1c253-c993-4aab-ab66-325115e7ead0}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="GUI Files">
+      <UniqueIdentifier>{6358751c-0e8c-4ff7-90d2-0667b8d8789e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Display_result_qt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_Display_result_qt.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_Display_Result_Qt.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_Display_result_qt.cpp">
+    <ClCompile Include="GeneratedFiles\Release\moc_Display_Result_Qt.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_Display_result_qt.cpp">
+    <ClCompile Include="GeneratedFiles\qrc_Display_Result_Qt.cpp">
       <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Display_Result_Qt.cpp">
+      <Filter>GUI Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PCLViewer.cpp">
+      <Filter>GUI Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Display_result_qt.h">
+    <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Display_result_qt.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Display_result_qt.qrc">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_Display_result_qt.h">
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_Display_Result_Qt.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PCLViewer.h">
+      <Filter>GUI Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Display_Result_Qt.rc" />
+    <CustomBuild Include="Display_Result_Qt.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Display_Result_Qt.qrc">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Display_Result_Qt.h">
+      <Filter>GUI Files</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
