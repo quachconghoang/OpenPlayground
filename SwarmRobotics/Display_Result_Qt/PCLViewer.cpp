@@ -19,14 +19,23 @@ void PCLViewer::setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize /* = 1000
 {
 	qvtkWidget = _qvtkWidget;
 
-	pclViewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
-	pclViewer->addCoordinateSystem(axeSize);
-	qvtkWidget->SetRenderWindow(pclViewer->getRenderWindow());
-	pclViewer->setupInteractor(qvtkWidget->GetInteractor(), qvtkWidget->GetRenderWindow());
+	pclVisualizer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
+	pclVisualizer->addCoordinateSystem(axeSize);
+	qvtkWidget->SetRenderWindow(pclVisualizer->getRenderWindow());
+	pclVisualizer->setupInteractor(qvtkWidget->GetInteractor(), qvtkWidget->GetRenderWindow());
 	qvtkWidget->update();
 
-	//pclViewer->registerPointPickingCallback(boost::bind(&PCLViewer::pp_callback, this, _1, (void*)&pclViewer));
-	pclViewer->registerMouseCallback(boost::bind(&PCLViewer::mouseEventOccurred, this, _1, (void*)&pclViewer));
+	pclVisualizer->registerPointPickingCallback(boost::bind(&PCLViewer::pp_callback, this, _1, (void*)&pclVisualizer));
+	pclVisualizer->registerMouseCallback(boost::bind(&PCLViewer::mouseEventOccurred, this, _1, (void*)&pclVisualizer));
+}
+
+void PCLViewer::displayRawData()
+{
+	if (cloudStorage.cloud_input)
+	{
+		pclVisualizer->removeAllPointClouds();
+		pclVisualizer->addPointCloud(cloudStorage.cloud_input, cloudStorage.cloud_input_id);
+	}
 }
 
 void PCLViewer::mouseEventOccurred(const pcl::visualization::MouseEvent &event, void* viewer_void)
@@ -36,4 +45,9 @@ void PCLViewer::mouseEventOccurred(const pcl::visualization::MouseEvent &event, 
 	{
 		//qDebug() << "C++ Style Debug Message";
 	}
+}
+
+void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void)
+{
+
 }

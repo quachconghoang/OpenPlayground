@@ -46,8 +46,14 @@ public:
         Display_Result_QtClass->resize(640, 480);
         actionOpen_PCD = new QAction(Display_Result_QtClass);
         actionOpen_PCD->setObjectName(QStringLiteral("actionOpen_PCD"));
+        QIcon icon;
+        icon.addFile(QStringLiteral(":/Display_Result_Qt/Resources/open.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionOpen_PCD->setIcon(icon);
         actionShow_Mesh = new QAction(Display_Result_QtClass);
         actionShow_Mesh->setObjectName(QStringLiteral("actionShow_Mesh"));
+        QIcon icon1;
+        icon1.addFile(QStringLiteral(":/Display_Result_Qt/Resources/backlines.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionShow_Mesh->setIcon(icon1);
         centralWidget = new QWidget(Display_Result_QtClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);

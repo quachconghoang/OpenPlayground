@@ -59,6 +59,12 @@
     <ClCompile Include="PCLViewer.cpp">
       <Filter>GUI Files</Filter>
     </ClCompile>
+    <ClCompile Include="PCLStorage.cpp">
+      <Filter>GUI Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldSegmentation.cpp">
+      <Filter>GUI Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -68,6 +74,12 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="PCLViewer.h">
+      <Filter>GUI Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PCLStorage.h">
+      <Filter>GUI Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldSegmentation.h">
       <Filter>GUI Files</Filter>
     </ClInclude>
   </ItemGroup>
