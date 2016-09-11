@@ -12,10 +12,10 @@ public:
 	~PCLViewer();
 
 	void setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize = 1000);
-	void displayRawData();
+	void displayRawData(PCLStorage & _cloudStorage);
 
 	pcl::visualization::PCLVisualizer::Ptr pclVisualizer;
-	PCLStorage cloudStorage;
+	//PCLStorage cloudStorage;
 	QVTKWidget * qvtkWidget;
 
 private:

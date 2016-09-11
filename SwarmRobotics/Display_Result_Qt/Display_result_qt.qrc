@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="Display_Result_Qt">
+    <file>Resources/segment.png</file>
     <file>Resources/backlines.png</file>
     <file>Resources/GenMesh.png</file>
     <file>Resources/open.png</file>

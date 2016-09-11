@@ -29,12 +29,12 @@ void PCLViewer::setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize /* = 1000
 	pclVisualizer->registerMouseCallback(boost::bind(&PCLViewer::mouseEventOccurred, this, _1, (void*)&pclVisualizer));
 }
 
-void PCLViewer::displayRawData()
+void PCLViewer::displayRawData(PCLStorage & _cloudStorage)
 {
-	if (cloudStorage.cloud_input)
+	if (_cloudStorage.cloud_input)
 	{
 		pclVisualizer->removeAllPointClouds();
-		pclVisualizer->addPointCloud(cloudStorage.cloud_input, cloudStorage.cloud_input_id);
+		pclVisualizer->addPointCloud(_cloudStorage.cloud_input, _cloudStorage.cloud_input_id);
 	}
 }
 

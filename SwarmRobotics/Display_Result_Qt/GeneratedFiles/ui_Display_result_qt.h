@@ -30,6 +30,7 @@ class Ui_Display_Result_QtClass
 public:
     QAction *actionOpen_PCD;
     QAction *actionShow_Mesh;
+    QAction *actionSegmentation;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QVTKWidget *qvtkWidget;
@@ -54,6 +55,11 @@ public:
         QIcon icon1;
         icon1.addFile(QStringLiteral(":/Display_Result_Qt/Resources/backlines.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionShow_Mesh->setIcon(icon1);
+        actionSegmentation = new QAction(Display_Result_QtClass);
+        actionSegmentation->setObjectName(QStringLiteral("actionSegmentation"));
+        QIcon icon2;
+        icon2.addFile(QStringLiteral(":/Display_Result_Qt/Resources/segment.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionSegmentation->setIcon(icon2);
         centralWidget = new QWidget(Display_Result_QtClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);
@@ -68,7 +74,7 @@ public:
         Display_Result_QtClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(Display_Result_QtClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 640, 21));
+        menuBar->setGeometry(QRect(0, 0, 640, 26));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuHelp = new QMenu(menuBar);
@@ -84,6 +90,7 @@ public:
         menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuHelp->menuAction());
         mainToolBar->addAction(actionOpen_PCD);
+        mainToolBar->addAction(actionSegmentation);
         mainToolBar->addAction(actionShow_Mesh);
 
         retranslateUi(Display_Result_QtClass);
@@ -96,6 +103,7 @@ public:
         Display_Result_QtClass->setWindowTitle(QApplication::translate("Display_Result_QtClass", "Display_Result_Qt", 0));
         actionOpen_PCD->setText(QApplication::translate("Display_Result_QtClass", "Open PCD", 0));
         actionShow_Mesh->setText(QApplication::translate("Display_Result_QtClass", "Show Mesh", 0));
+        actionSegmentation->setText(QApplication::translate("Display_Result_QtClass", "Segmentation", 0));
         menuFile->setTitle(QApplication::translate("Display_Result_QtClass", "File", 0));
         menuHelp->setTitle(QApplication::translate("Display_Result_QtClass", "Help", 0));
     } // retranslateUi

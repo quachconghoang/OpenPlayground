@@ -9,6 +9,12 @@ Display_Result_Qt::Display_Result_Qt(QWidget *parent)
 	viewer3D.setupPCLViewer(ui.qvtkWidget);
 
 	connect(ui.actionOpen_PCD, SIGNAL(triggered()), this, SLOT(slot_IO_OpenFilePCD()));
+
+	//connect(ui.actionSegmentation, SIGNAL(triggered()), this, SLOT(slot_Processing_Segment()));
+	processBox = new ProcessBox(this);
+	processBox->setProcessMode(PMODE_SEGMENTATION);
+	connect(processBox, SIGNAL(process(std::vector<double>)), this, SLOT(slot_Processing_Segment(std::vector<double>)));
+	connect(ui.actionSegmentation, SIGNAL(triggered()), processBox, SLOT(show()));
 }
 
 Display_Result_Qt::~Display_Result_Qt()
@@ -21,7 +27,19 @@ void Display_Result_Qt::slot_IO_OpenFilePCD()
 	QString fileName = QFileDialog::getOpenFileName(this, QString("Open pointcloud file"), QString(".//Samples//"), QString("PCD file (*.pcd)"));
 	if (fileName.length() > 0)
 	{
-		viewer3D.cloudStorage.setInputCloud(fileName.toStdString());
-		viewer3D.displayRawData();
+		cloudStorage.setInputCloud(fileName.toStdString());
+		viewer3D.displayRawData(cloudStorage);
 	}
+}
+
+void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
+{
+
+	qDebug() << "Setup - 1 ... ";
+}
+
+void Display_Result_Qt::slot_Processing_CapturePoints(std::vector<double> values)
+{
+
+	qDebug() << "Setup - 2... ";
 }

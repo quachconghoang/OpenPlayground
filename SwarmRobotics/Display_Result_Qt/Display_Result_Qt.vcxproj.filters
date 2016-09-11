@@ -36,6 +36,9 @@
     <Filter Include="GUI Files">
       <UniqueIdentifier>{6358751c-0e8c-4ff7-90d2-0667b8d8789e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Processing Files">
+      <UniqueIdentifier>{8297ba71-d69f-4dbb-be58-7d1f54dcd24d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -59,11 +62,20 @@
     <ClCompile Include="PCLViewer.cpp">
       <Filter>GUI Files</Filter>
     </ClCompile>
+    <ClCompile Include="WorldSegmentation.cpp">
+      <Filter>Processing Files</Filter>
+    </ClCompile>
     <ClCompile Include="PCLStorage.cpp">
+      <Filter>Processing Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessBox.cpp">
       <Filter>GUI Files</Filter>
     </ClCompile>
-    <ClCompile Include="WorldSegmentation.cpp">
-      <Filter>GUI Files</Filter>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ProcessBox.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ProcessBox.cpp">
+      <Filter>Generated Files\Release</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -76,11 +88,14 @@
     <ClInclude Include="PCLViewer.h">
       <Filter>GUI Files</Filter>
     </ClInclude>
-    <ClInclude Include="PCLStorage.h">
-      <Filter>GUI Files</Filter>
-    </ClInclude>
     <ClInclude Include="WorldSegmentation.h">
-      <Filter>GUI Files</Filter>
+      <Filter>Processing Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PCLStorage.h">
+      <Filter>Processing Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_ProcessBox.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +107,12 @@
     </CustomBuild>
     <CustomBuild Include="Display_Result_Qt.h">
       <Filter>GUI Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ProcessBox.h">
+      <Filter>GUI Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ProcessBox.ui">
+      <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

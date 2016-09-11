@@ -2,6 +2,7 @@
 #define PCL_STORAGE_H
 
 #include "pcl/common/common_headers.h"
+#include "WorldSegmentation.h"
 
 #ifndef HOANGQC_POINTXYZ
 #define HOANGQC_POINTXYZ
@@ -45,8 +46,15 @@ public:
 	
 	PointCloudPtrT cloud_input;
 	std::string cloud_input_id;
-	void setInputCloud(std::string fileName);
+	bool isSegmented;
 
+	void setInputCloud(std::string fileName);
+	void segmentPointcloud(double minPlaneArea, 
+		double disThreshold, 
+		double maxIter, 
+		int maxRetry, 
+		int minClusterSize, 
+		double clusterThreshold);
 };
 
 #endif
