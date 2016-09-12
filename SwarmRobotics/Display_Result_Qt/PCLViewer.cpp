@@ -2,6 +2,12 @@
 #include "PCLViewer.h"
 #include "vtkRenderWindow.h"
 
+#define kSurfacePrefix ".cloud_"
+#define kHullPrefix ".hull_"
+#define kMeshPrefix ".mesh_"
+#define kCapturePointPrefix ".capturePoints_"
+
+using namespace pcl::visualization;
 
 PCLViewer::PCLViewer()
 {
@@ -35,6 +41,25 @@ void PCLViewer::displayRawData(PCLStorage & _cloudStorage)
 	{
 		pclVisualizer->removeAllPointClouds();
 		pclVisualizer->addPointCloud(_cloudStorage.cloud_input, _cloudStorage.cloud_input_id);
+	}
+}
+
+void PCLViewer::displaySurfaces(PCLStorage * obj)
+{
+	for (int i = 0; i < obj->planes.size(); i++)
+	{
+		std::string tagID = obj->planes[i].tagID + kSurfacePrefix;
+		std::string tagHull_ID = obj->planes[i].tagID + kHullPrefix;
+
+		pclVisualizer->removeShape(tagHull_ID);
+		pclVisualizer->removePointCloud(tagID);
+
+		pclVisualizer->addPointCloud<PointT>(obj->planes[i].pointCloud, tagID);
+		RGBColor cl = obj->planes[i].color;
+		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagID);
+
+		pclVisualizer->addPolygon<PointT>(obj->planes[i].hullCloud, tagHull_ID);
+		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagHull_ID);
 	}
 }
 

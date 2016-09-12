@@ -34,12 +34,15 @@ void Display_Result_Qt::slot_IO_OpenFilePCD()
 
 void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 {
-
-	qDebug() << "Setup - 1 ... ";
+	processBox->hide();
+	if (values[0] != PROCESSBOX_CANCEL)
+	{
+		//cloudStorage.segmentPointcloud(values[0], values[1], values[2], values[3])
+	}
+	
 }
 
 void Display_Result_Qt::slot_Processing_CapturePoints(std::vector<double> values)
 {
-
 	qDebug() << "Setup - 2... ";
 }

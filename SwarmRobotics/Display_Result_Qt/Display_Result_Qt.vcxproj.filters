@@ -62,9 +62,6 @@
     <ClCompile Include="PCLViewer.cpp">
       <Filter>GUI Files</Filter>
     </ClCompile>
-    <ClCompile Include="WorldSegmentation.cpp">
-      <Filter>Processing Files</Filter>
-    </ClCompile>
     <ClCompile Include="PCLStorage.cpp">
       <Filter>Processing Files</Filter>
     </ClCompile>
@@ -77,6 +74,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_ProcessBox.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="PlanarCreator.cpp">
+      <Filter>Processing Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -88,14 +88,14 @@
     <ClInclude Include="PCLViewer.h">
       <Filter>GUI Files</Filter>
     </ClInclude>
-    <ClInclude Include="WorldSegmentation.h">
-      <Filter>Processing Files</Filter>
-    </ClInclude>
     <ClInclude Include="PCLStorage.h">
       <Filter>Processing Files</Filter>
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_ProcessBox.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlanarCreator.h">
+      <Filter>Processing Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
