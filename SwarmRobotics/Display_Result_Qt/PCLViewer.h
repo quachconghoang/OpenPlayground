@@ -16,11 +16,10 @@ public:
 	void displaySurfaces(PCLStorage * obj);
 
 	pcl::visualization::PCLVisualizer::Ptr pclVisualizer;
-	//PCLStorage cloudStorage;
+	PCLStorage * pclStorage;
 	QVTKWidget * qvtkWidget;
 
 private:
-	void mouseEventOccurred(const pcl::visualization::MouseEvent &event, void* viewer_void);
 	void pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void);
 };
 

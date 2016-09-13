@@ -32,7 +32,6 @@ void PCLViewer::setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize /* = 1000
 	qvtkWidget->update();
 
 	pclVisualizer->registerPointPickingCallback(boost::bind(&PCLViewer::pp_callback, this, _1, (void*)&pclVisualizer));
-	pclVisualizer->registerMouseCallback(boost::bind(&PCLViewer::mouseEventOccurred, this, _1, (void*)&pclVisualizer));
 }
 
 void PCLViewer::displayRawData(PCLStorage & _cloudStorage)
@@ -63,16 +62,18 @@ void PCLViewer::displaySurfaces(PCLStorage * obj)
 	}
 }
 
-void PCLViewer::mouseEventOccurred(const pcl::visualization::MouseEvent &event, void* viewer_void)
-{
-	if (event.getButton() == pcl::visualization::MouseEvent::MouseScrollDown ||
-		event.getButton() == pcl::visualization::MouseEvent::MouseScrollUp)
-	{
-		//qDebug() << "C++ Style Debug Message";
-	}
-}
-
 void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void)
 {
+	//PCLStorage
+	if (event.getPointIndex() == -1)
+		return;
+	PointT current_point;
+	event.getPoint(current_point.x, current_point.y, current_point.z);
+	pclVisualizer->removeShape("sphere");
+	pclVisualizer->addSphere(current_point, 100, 1, 0, 1, "sphere", 0);
 
+	if (pclStorage->isSegmented)
+	{
+		//m_viewer->highlightSurface(&m_storage, current_point);
+	}
 }

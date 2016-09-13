@@ -77,6 +77,15 @@
     <ClCompile Include="PlanarCreator.cpp">
       <Filter>Processing Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_VisualConnector.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_VisualConnector.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="VisualConnector.cpp">
+      <Filter>GUI Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -113,6 +122,9 @@
     </CustomBuild>
     <CustomBuild Include="ProcessBox.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="VisualConnector.h">
+      <Filter>GUI Files</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

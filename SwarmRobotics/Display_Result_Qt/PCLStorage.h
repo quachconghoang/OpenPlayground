@@ -5,6 +5,7 @@
 #include "PlanarCreator.h"
 #include <boost/container/vector.hpp>
 #include <random>
+#include "VisualConnector.h"
 
 #ifndef HOANGQC_POINTXYZ
 #define HOANGQC_POINTXYZ
@@ -17,12 +18,7 @@ typedef pcl::PointCloud<pcl::Normal>			NormalCloudT;
 typedef pcl::PointCloud<pcl::Normal>::Ptr		NormalCloudPtrT;
 #endif
 
-struct RGBColor
-{
-	double r;
-	double g;
-	double b;
-};
+struct RGBColor{	double r;	double g;	double b;	};
 enum PLANE_VISUALIZATION_MODE{ PLANE_RAW, PLANE_GRID, PLANE_MESH, PLANE_NONE };
 
 class PlaneStorage
@@ -63,12 +59,15 @@ public:
 	PointCloudPtrT cloud_input;
 	std::string cloud_input_id;
 	bool isSegmented;
+	VisualConnector * visualConnector;
 
 	std::string tagID;
-	/** \brief Array of PlaneStorage. */
 	boost::container::vector<PlaneStorage> planes;
 
 	void setInputCloud(std::string fileName);
+	void clearData();
+
+	void segmentParams(std::vector<double> params);
 	void segmentPointcloud(double minPlaneArea, 
 		double disThreshold, 
 		double maxIter, 

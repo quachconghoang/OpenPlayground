@@ -4,10 +4,6 @@
 #include <QDialog>
 #include "ui_ProcessBox.h"
 
-/** \brief Type of process dialog.
-  * \author HoangQC
-  * \ingroup QT-GUI
-  */
 enum PROCESS_MODE
 {
 	PMODE_SEGMENTATION,

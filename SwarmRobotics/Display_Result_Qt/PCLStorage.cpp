@@ -37,8 +37,6 @@ void PlaneStorage::clear()
 	blockCloud.clear();
 }
 
-
-
 PCLStorage::PCLStorage()
 {
 	isSegmented = false;
@@ -52,6 +50,17 @@ void PCLStorage::setInputCloud(std::string fileName)
 {
 	cloud_input.reset(new PointCloudT);
 	pcl::io::loadPCDFile(fileName, *cloud_input);
+}
+
+void PCLStorage::clearData()
+{
+
+}
+
+void PCLStorage::segmentParams(std::vector<double> params)
+{
+	segmentPointcloud(params[0], params[1], params[2], 20, 20, params[3]);
+	emit visualConnector->signal_processFinish(PSWM_SEGMENT_DONE);
 }
 
 void PCLStorage::segmentPointcloud(double minPlaneArea, 
@@ -83,8 +92,8 @@ void PCLStorage::segmentPointcloud(double minPlaneArea,
 	while (cloud_blob->points.size() > minClusterSize && fail_count < maxRetry)
 	{
 		/// 1. Update progress bar animations
-		//double valPercent = (nr_points - cloud_blob->points.size()) * 100 / nr_points;
-		//emit visualConnector->signal_processBarUpdating(int(valPercent));
+		double valPercent = (nr_points - cloud_blob->points.size()) * 100 / nr_points;
+		emit visualConnector->signal_processBarUpdating(int(valPercent));
 
 		pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
 		seg.setInputCloud(cloud_blob);
