@@ -59,12 +59,81 @@ void PCLViewer::displaySurfaces(PCLStorage * obj)
 
 		pclVisualizer->addPolygon<PointT>(obj->planes[i].hullCloud, tagHull_ID);
 		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagHull_ID);
+
+		obj->planes[i].displayingMode = PLANE_RAW;
 	}
+}
+
+void PCLViewer::highlightSurface(PCLStorage * obj, pcl::PointXYZ p)
+{
+	int minIndex = 0;
+	float minValue = 30000.f;
+	for (int i = 0; i < obj->planes.size(); i++){
+		pcl::ModelCoefficients::Ptr model = obj->planes[i].modelCoefficients;
+		float a = model->values[0];
+		float b = model->values[1];
+		float c = model->values[2];
+		float d = model->values[3];
+		float difVal = fabs(a*p.x + b*p.y + c*p.z + d);
+
+		if (difVal < minValue){
+			minIndex = i;
+			minValue = difVal;
+		}
+	}
+	if (minIndex != obj->selected_Index && minIndex < obj->planes.size()){
+		if (obj->selected_Index != -1)
+		{
+			//REMOVE PREVIOUS HIGHLIGHT
+			unHighlightSurfaces(obj);
+		}
+		std::string enable_ID = obj->planes[minIndex].tagID + kSurfacePrefix;
+		setPointCloudSelected(true, enable_ID);
+		PointCloudPtrT hull = obj->planes[minIndex].hullCloud;
+		obj->selected_Index = minIndex;
+		obj->visualConnector->planeDidSelected(true);
+	}
+	else
+	{
+		unHighlightSurfaces(obj);
+	}
+}
+
+void  PCLViewer::unHighlightSurfaces(PCLStorage * obj)
+{
+	if (obj->selected_Index != -1){
+		std::string m_ID = obj->planes[obj->selected_Index].tagID;
+		setPointCloudSelected(false, m_ID + kSurfacePrefix);
+		obj->selected_Index = -1;
+		obj->visualConnector->planeDidSelected(false);
+	}
+}
+
+bool PCLViewer::setPointCloudSelected(const bool selected, const std::string &id)
+{
+	CloudActorMap::iterator am_it = pclVisualizer->getCloudActorMap()->find(id);
+
+	if (am_it == pclVisualizer->getCloudActorMap()->end()){
+		pcl::console::print_error("[setPointCloudRenderingProperties] Could not find any PointCloud datasets with id <%s>!\n", id.c_str());
+		return (false);
+	}
+	// Get the actor pointer
+	vtkLODActor* actor = vtkLODActor::SafeDownCast(am_it->second.actor);
+	float psize = actor->GetProperty()->GetPointSize();
+	if (selected){
+		actor->GetProperty()->SetPointSize(psize + 5);
+		actor->Modified();
+	}
+	else{
+		if (psize - 5 < 1)psize = 1; else psize -= 5;
+		actor->GetProperty()->SetPointSize(psize);
+		actor->Modified();
+	}
+	return (true);
 }
 
 void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void)
 {
-	//PCLStorage
 	if (event.getPointIndex() == -1)
 		return;
 	PointT current_point;
@@ -72,8 +141,5 @@ void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, 
 	pclVisualizer->removeShape("sphere");
 	pclVisualizer->addSphere(current_point, 100, 1, 0, 1, "sphere", 0);
 
-	if (pclStorage->isSegmented)
-	{
-		//m_viewer->highlightSurface(&m_storage, current_point);
-	}
+	if (pclStorage->isSegmented)	highlightSurface(pclStorage, current_point);
 }

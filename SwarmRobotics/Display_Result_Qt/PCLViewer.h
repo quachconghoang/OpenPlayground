@@ -15,6 +15,10 @@ public:
 	void displayRawData(PCLStorage & _cloudStorage);
 	void displaySurfaces(PCLStorage * obj);
 
+	void highlightSurface(PCLStorage * obj, pcl::PointXYZ p);
+	void unHighlightSurfaces(PCLStorage * obj);
+	bool setPointCloudSelected(const bool selected, const std::string &id);
+
 	pcl::visualization::PCLVisualizer::Ptr pclVisualizer;
 	PCLStorage * pclStorage;
 	QVTKWidget * qvtkWidget;

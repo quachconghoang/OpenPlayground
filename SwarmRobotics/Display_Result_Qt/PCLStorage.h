@@ -59,6 +59,7 @@ public:
 	PointCloudPtrT cloud_input;
 	std::string cloud_input_id;
 	bool isSegmented;
+	int selected_Index;
 	VisualConnector * visualConnector;
 
 	std::string tagID;
