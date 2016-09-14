@@ -31,6 +31,10 @@ public:
     QAction *actionOpen_PCD;
     QAction *actionShow_Mesh;
     QAction *actionSegmentation;
+    QAction *actionShowOrigin;
+    QAction *actionChangeColor;
+    QAction *actionGenCapturePoints;
+    QAction *actionSaveCapturePoints;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QVTKWidget *qvtkWidget;
@@ -39,6 +43,7 @@ public:
     QMenu *menuHelp;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
+    QToolBar *processingToolBar;
 
     void setupUi(QMainWindow *Display_Result_QtClass)
     {
@@ -60,6 +65,26 @@ public:
         QIcon icon2;
         icon2.addFile(QStringLiteral(":/Display_Result_Qt/Resources/segment.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionSegmentation->setIcon(icon2);
+        actionShowOrigin = new QAction(Display_Result_QtClass);
+        actionShowOrigin->setObjectName(QStringLiteral("actionShowOrigin"));
+        QIcon icon3;
+        icon3.addFile(QStringLiteral(":/Display_Result_Qt/Resources/show_origin_icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionShowOrigin->setIcon(icon3);
+        actionChangeColor = new QAction(Display_Result_QtClass);
+        actionChangeColor->setObjectName(QStringLiteral("actionChangeColor"));
+        QIcon icon4;
+        icon4.addFile(QStringLiteral(":/Display_Result_Qt/Resources/rgbt.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionChangeColor->setIcon(icon4);
+        actionGenCapturePoints = new QAction(Display_Result_QtClass);
+        actionGenCapturePoints->setObjectName(QStringLiteral("actionGenCapturePoints"));
+        QIcon icon5;
+        icon5.addFile(QStringLiteral(":/Display_Result_Qt/Resources/waypoint_icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionGenCapturePoints->setIcon(icon5);
+        actionSaveCapturePoints = new QAction(Display_Result_QtClass);
+        actionSaveCapturePoints->setObjectName(QStringLiteral("actionSaveCapturePoints"));
+        QIcon icon6;
+        icon6.addFile(QStringLiteral(":/Display_Result_Qt/Resources/waypoint_save_icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionSaveCapturePoints->setIcon(icon6);
         centralWidget = new QWidget(Display_Result_QtClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);
@@ -74,7 +99,7 @@ public:
         Display_Result_QtClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(Display_Result_QtClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 640, 26));
+        menuBar->setGeometry(QRect(0, 0, 640, 21));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuHelp = new QMenu(menuBar);
@@ -86,12 +111,19 @@ public:
         statusBar = new QStatusBar(Display_Result_QtClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
         Display_Result_QtClass->setStatusBar(statusBar);
+        processingToolBar = new QToolBar(Display_Result_QtClass);
+        processingToolBar->setObjectName(QStringLiteral("processingToolBar"));
+        Display_Result_QtClass->addToolBar(Qt::LeftToolBarArea, processingToolBar);
 
         menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuHelp->menuAction());
         mainToolBar->addAction(actionOpen_PCD);
-        mainToolBar->addAction(actionSegmentation);
+        mainToolBar->addAction(actionShowOrigin);
         mainToolBar->addAction(actionShow_Mesh);
+        processingToolBar->addAction(actionSegmentation);
+        processingToolBar->addAction(actionChangeColor);
+        processingToolBar->addAction(actionGenCapturePoints);
+        processingToolBar->addAction(actionSaveCapturePoints);
 
         retranslateUi(Display_Result_QtClass);
 
@@ -104,8 +136,13 @@ public:
         actionOpen_PCD->setText(QApplication::translate("Display_Result_QtClass", "Open PCD", 0));
         actionShow_Mesh->setText(QApplication::translate("Display_Result_QtClass", "Show Mesh", 0));
         actionSegmentation->setText(QApplication::translate("Display_Result_QtClass", "Segmentation", 0));
+        actionShowOrigin->setText(QApplication::translate("Display_Result_QtClass", "ShowOrigin", 0));
+        actionChangeColor->setText(QApplication::translate("Display_Result_QtClass", "ChangeColor", 0));
+        actionGenCapturePoints->setText(QApplication::translate("Display_Result_QtClass", "GenCapturePoints", 0));
+        actionSaveCapturePoints->setText(QApplication::translate("Display_Result_QtClass", "SaveCapturePoints", 0));
         menuFile->setTitle(QApplication::translate("Display_Result_QtClass", "File", 0));
         menuHelp->setTitle(QApplication::translate("Display_Result_QtClass", "Help", 0));
+        processingToolBar->setWindowTitle(QApplication::translate("Display_Result_QtClass", "toolBar", 0));
     } // retranslateUi
 
 };

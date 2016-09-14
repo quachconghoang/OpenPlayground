@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -50,10 +50,25 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen_PCD"/>
-   <addaction name="actionSegmentation"/>
+   <addaction name="actionShowOrigin"/>
    <addaction name="actionShow_Mesh"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="processingToolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSegmentation"/>
+   <addaction name="actionChangeColor"/>
+   <addaction name="actionGenCapturePoints"/>
+   <addaction name="actionSaveCapturePoints"/>
+  </widget>
   <action name="actionOpen_PCD">
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
@@ -79,6 +94,42 @@
    </property>
    <property name="text">
     <string>Segmentation</string>
+   </property>
+  </action>
+  <action name="actionShowOrigin">
+   <property name="icon">
+    <iconset resource="Display_Result_Qt.qrc">
+     <normaloff>:/Display_Result_Qt/Resources/show_origin_icon.png</normaloff>:/Display_Result_Qt/Resources/show_origin_icon.png</iconset>
+   </property>
+   <property name="text">
+    <string>ShowOrigin</string>
+   </property>
+  </action>
+  <action name="actionChangeColor">
+   <property name="icon">
+    <iconset resource="Display_Result_Qt.qrc">
+     <normaloff>:/Display_Result_Qt/Resources/rgbt.png</normaloff>:/Display_Result_Qt/Resources/rgbt.png</iconset>
+   </property>
+   <property name="text">
+    <string>ChangeColor</string>
+   </property>
+  </action>
+  <action name="actionGenCapturePoints">
+   <property name="icon">
+    <iconset resource="Display_Result_Qt.qrc">
+     <normaloff>:/Display_Result_Qt/Resources/waypoint_icon.png</normaloff>:/Display_Result_Qt/Resources/waypoint_icon.png</iconset>
+   </property>
+   <property name="text">
+    <string>GenCapturePoints</string>
+   </property>
+  </action>
+  <action name="actionSaveCapturePoints">
+   <property name="icon">
+    <iconset resource="Display_Result_Qt.qrc">
+     <normaloff>:/Display_Result_Qt/Resources/waypoint_save_icon.png</normaloff>:/Display_Result_Qt/Resources/waypoint_save_icon.png</iconset>
+   </property>
+   <property name="text">
+    <string>SaveCapturePoints</string>
    </property>
   </action>
  </widget>

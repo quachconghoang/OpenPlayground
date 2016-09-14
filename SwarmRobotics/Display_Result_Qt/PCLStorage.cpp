@@ -40,6 +40,7 @@ void PlaneStorage::clear()
 PCLStorage::PCLStorage()
 {
 	isSegmented = false;
+	genRandom = cv::RNG(0xFFFFFFFF);
 }
 
 PCLStorage::~PCLStorage()
@@ -195,8 +196,9 @@ void PCLStorage::segmentPointcloud(double minPlaneArea,
 					qDebug() << "block size = " << pan.blockCloud.size();
 					pan.mesh = helper::triangulation(pan.gridCloud);
 
-					std::uniform_real_distribution<> distribution(0, 1);
-					pan.color.r = distribution(gen); pan.color.g = distribution(gen); pan.color.b = distribution(gen);
+					pan.color.r = genRandom.uniform(0.3, 1.0); 
+					pan.color.g = genRandom.uniform(0.3, 1.0); 
+					pan.color.b = genRandom.uniform(0.3, 1.0);
 					planes.push_back(pan);
 
 					//pcl::io::savePCDFileBinary("cube_"+std::to_string(planes.size())+".pcd",*cloud_projected);

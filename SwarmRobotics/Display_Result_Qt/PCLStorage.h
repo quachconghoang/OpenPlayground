@@ -77,7 +77,9 @@ public:
 		double clusterThreshold);
 
 private:
-	std::mt19937 gen;
+
+	cv::RNG genRandom;
+	//std::mt19937 gen;
 	//void calculateBoundModel(PointCloudPtrT cloud_input);
 };
 
