@@ -34,14 +34,15 @@ private:
 
 	private slots:
 	void slot_IO_OpenFilePCD();
+	void slot_IO_SaveCapturePoint();
 
 	void slot_Processing_Segment(std::vector<double> values);
-
 	void slot_Processing_CapturePoints(std::vector<double> values);
 
 	void slot_UI_ShowOrigin(bool isChecked);
 	void slot_UI_ShowGrid(bool isChecked);
 	void slot_UI_ShowMesh(bool isChecked);
+	void slot_UI_ShowObjects(bool isChecked);
 
 	void slot_UI_BarUpdate(int val);
 	void slot_UI_Finish(PS_WORKING_MODE mode);

@@ -24,6 +24,11 @@
 #include <pcl/point_types.h>
 #include <pcl/ModelCoefficients.h>
 
+#include <pcl/octree/octree.h>
+#include <pcl/octree/octree_pointcloud_adjacency.h>
+#include <pcl/octree/octree_pointcloud_adjacency_container.h>
+#include <pcl/octree/octree_pointcloud_changedetector.h>
+
 #include "Eigen/Dense"
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

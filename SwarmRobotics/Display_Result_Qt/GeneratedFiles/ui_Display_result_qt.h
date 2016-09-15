@@ -36,6 +36,7 @@ public:
     QAction *actionGenCapturePoints;
     QAction *actionSaveCapturePoints;
     QAction *actionShowGridCloud;
+    QAction *actionShowObjectAsCube;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QVTKWidget *qvtkWidget;
@@ -101,6 +102,13 @@ public:
         QIcon icon7;
         icon7.addFile(QStringLiteral(":/Display_Result_Qt/Resources/GenMesh.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionShowGridCloud->setIcon(icon7);
+        actionShowObjectAsCube = new QAction(Display_Result_QtClass);
+        actionShowObjectAsCube->setObjectName(QStringLiteral("actionShowObjectAsCube"));
+        actionShowObjectAsCube->setCheckable(true);
+        actionShowObjectAsCube->setEnabled(false);
+        QIcon icon8;
+        icon8.addFile(QStringLiteral(":/Display_Result_Qt/Resources/bbox.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionShowObjectAsCube->setIcon(icon8);
         centralWidget = new QWidget(Display_Result_QtClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         horizontalLayout = new QHBoxLayout(centralWidget);
@@ -123,6 +131,7 @@ public:
         Display_Result_QtClass->setMenuBar(menuBar);
         mainToolBar = new QToolBar(Display_Result_QtClass);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
+        mainToolBar->setEnabled(true);
         Display_Result_QtClass->addToolBar(Qt::TopToolBarArea, mainToolBar);
         statusBar = new QStatusBar(Display_Result_QtClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
@@ -139,6 +148,7 @@ public:
         mainToolBar->addAction(actionShowOrigin);
         mainToolBar->addAction(actionShowGridCloud);
         mainToolBar->addAction(actionShow_Mesh);
+        mainToolBar->addAction(actionShowObjectAsCube);
         processingToolBar->addAction(actionSegmentation);
         processingToolBar->addAction(actionGenCapturePoints);
         processingToolBar->addSeparator();
@@ -160,6 +170,7 @@ public:
         actionGenCapturePoints->setText(QApplication::translate("Display_Result_QtClass", "GenCapturePoints", 0));
         actionSaveCapturePoints->setText(QApplication::translate("Display_Result_QtClass", "SaveCapturePoints", 0));
         actionShowGridCloud->setText(QApplication::translate("Display_Result_QtClass", "ShowGridCloud", 0));
+        actionShowObjectAsCube->setText(QApplication::translate("Display_Result_QtClass", "ShowObjectAsCube", 0));
         menuFile->setTitle(QApplication::translate("Display_Result_QtClass", "File", 0));
         menuHelp->setTitle(QApplication::translate("Display_Result_QtClass", "Help", 0));
         processingToolBar->setWindowTitle(QApplication::translate("Display_Result_QtClass", "toolBar", 0));

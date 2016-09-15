@@ -39,7 +39,11 @@ void PlaneStorage::clear()
 
 PCLStorage::PCLStorage()
 {
+	this->tagID = "Noname";
 	isSegmented = false;
+	selected_Index = -1;
+	cloud_input.reset(new PointCloudT);
+	cloud_remain.reset(new PointCloudT);
 	genRandom = cv::RNG(0xFFFFFFFF);
 }
 
@@ -227,7 +231,7 @@ void PCLStorage::segmentPointcloud(double minPlaneArea,
 
 	}
 
-	//cloud_remain = cloud_blob;
+	cloud_remain = cloud_blob;
 	isSegmented = true;
 }
 
@@ -243,4 +247,24 @@ int PCLStorage::createCapturePoint(uint cloud_index, float capture_width, float 
 
 	emit visualConnector->signal_processFinish(PSWM_NEW_WAYPOINT);
 	return 0;
+}
+
+bool PCLStorage::thePlaneHasWaypoint()
+{
+	if (selected_Index > -1 && planes[selected_Index].capturePoints->size() > 0) return true;
+	else return false;
+}
+
+int PCLStorage::saveWaypoint(std::string fileName)
+{
+	double mm_to_lat(1), mm_to_lon(1), mm_to_alt(0);
+	if (thePlaneHasWaypoint())
+	{
+		pcl::io::savePCDFileASCII(fileName, *planes[selected_Index].capturePoints);
+		return 0;
+	}
+	else
+	{
+		return  1;
+	}
 }

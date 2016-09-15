@@ -11,6 +11,7 @@ Display_Result_Qt::Display_Result_Qt(QWidget *parent)
 	m_viewer3D.pclStorage = &m_cloudStorage;
 
 	connect(ui.actionOpen_PCD, SIGNAL(triggered()), this, SLOT(slot_IO_OpenFilePCD()));
+	connect(ui.actionSaveCapturePoints, SIGNAL(triggered()), this, SLOT(slot_IO_SaveCapturePoint()));
 
 	//connect(ui.actionSegmentation, SIGNAL(triggered()), this, SLOT(slot_Processing_Segment()));
 	processBox = new ProcessBox(this);
@@ -26,6 +27,7 @@ Display_Result_Qt::Display_Result_Qt(QWidget *parent)
 	connect(ui.actionShowOrigin, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowOrigin(bool)));
 	connect(ui.actionShowGridCloud, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowGrid(bool)));
 	connect(ui.actionShow_Mesh, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowMesh(bool)));
+	connect(ui.actionShowObjectAsCube, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowObjects(bool)));
 
 	this->visualConnector = new VisualConnector(this);
 	m_cloudStorage.visualConnector = this->visualConnector;
@@ -53,6 +55,14 @@ void Display_Result_Qt::slot_IO_OpenFilePCD()
 	}
 }
 
+void Display_Result_Qt::slot_IO_SaveCapturePoint()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, QString("Save way point file"), QString(".//Samples//"), QString("Way point (*.pcd)"));
+	if (fileName.isNull()) return;
+	int ret = m_cloudStorage.saveWaypoint(fileName.toStdString());
+	if (ret == 1)	QMessageBox::warning(this, tr("Error"), tr("This surface has no way point"));
+}
+
 void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 {
 	processBox->hide();
@@ -67,10 +77,8 @@ void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 		processParam.clear();
 		processParam = values;
 
-		QtConcurrent::run(std::bind(&PCLStorage::segmentParams, &m_cloudStorage, processParam));
-		
 		ui.actionSegmentation->setEnabled(false);
-		ui.actionShowGridCloud->setEnabled(true);
+		QtConcurrent::run(std::bind(&PCLStorage::segmentParams, &m_cloudStorage, processParam));
 	}
 	
 }
@@ -85,8 +93,6 @@ void Display_Result_Qt::slot_Processing_CapturePoints(std::vector<double> values
 		processParam = values;
 
 		m_cloudStorage.createCapturePoint(m_cloudStorage.selected_Index, processParam[1], processParam[2], processParam[0]);
-		QtConcurrent::run(std::bind(&PCLStorage::createCapturePoint, &m_cloudStorage,
-			m_cloudStorage.selected_Index, processParam[1], processParam[2], processParam[0]));
 	}
 }
 
@@ -142,6 +148,7 @@ void Display_Result_Qt::slot_UI_Finish(PS_WORKING_MODE mode)
 		break;
 
 	case  PSWM_NEW_WAYPOINT:
+		qDebug() << "... Waypoints = " << m_cloudStorage.selected_Index;
 		m_viewer3D.displayCapturePoints(&m_cloudStorage, m_cloudStorage.selected_Index);
 		m_viewer3D.unHighlightSurfaces(&m_cloudStorage);
 
@@ -150,6 +157,10 @@ void Display_Result_Qt::slot_UI_Finish(PS_WORKING_MODE mode)
 	case  PSWM_SEGMENT_DONE:
 		m_viewer3D.displaySurfaces(&m_cloudStorage);
 		warningDialog->hide();
+
+		ui.actionShowGridCloud->setEnabled(true);
+		ui.actionShowObjectAsCube->setEnabled(true);
+
 		//m_viewer3D.qvtkWidget->update();
 		//ui.actionDisplayPlanes->setEnabled(true);
 		//ui.actionShow_Object->setEnabled(true);
@@ -165,7 +176,13 @@ void Display_Result_Qt::slot_UI_Finish(PS_WORKING_MODE mode)
 void Display_Result_Qt::slot_UI_PlaneChanged(bool isSelected)
 {
 	ui.actionChangeColor->setEnabled(isSelected);
-	//ui.actionEdit_Boundary->setEnabled(isSelected);
-	//ui.actionDelete_Plane->setEnabled(isSelected);
 	ui.actionGenCapturePoints->setEnabled(isSelected);
+	ui.actionSaveCapturePoints->setEnabled(isSelected && m_cloudStorage.thePlaneHasWaypoint());
+}
+
+void Display_Result_Qt::slot_UI_ShowObjects(bool isChecked)
+{
+	if (isChecked) m_viewer3D.displayRemainCloudAsCubes(&m_cloudStorage);
+	else m_viewer3D.hideRemainCloudAsCubes(&m_cloudStorage);
+	m_viewer3D.qvtkWidget->update();
 }

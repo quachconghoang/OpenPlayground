@@ -32,6 +32,12 @@ void PCLViewer::setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize /* = 1000
 	qvtkWidget->update();
 
 	pclVisualizer->registerPointPickingCallback(boost::bind(&PCLViewer::pp_callback, this, _1, (void*)&pclVisualizer));
+
+	startMesh = (new pcl::PolygonMesh);
+	stopMesh = (new pcl::PolygonMesh);
+
+	pcl::io::loadPLYFile("..\\..\\IndoorData\\flagStart.ply", *startMesh);
+	pcl::io::loadPLYFile("..\\..\\IndoorData\\flagStop.ply", *stopMesh);
 }
 
 void PCLViewer::displayRawData(PCLStorage & _cloudStorage)
@@ -174,9 +180,14 @@ bool PCLViewer::setPointCloudSelected(const bool selected, const std::string &id
 	return (true);
 }
 
-void PCLViewer::drawBrokenLines(PointCloudPtrT wp, const std::string& id /* = "WP" */, int viewport /* = 0 */)
+void transformMesh(pcl::PolygonMesh & inMesh, Eigen::Matrix4f transform, pcl::PolygonMesh & outMesh)
 {
-
+	//Important part starts here 
+	pcl::PointCloud<pcl::PointXYZRGBA> cloud;
+	pcl::fromPCLPointCloud2(inMesh.cloud, cloud);
+	pcl::transformPointCloud(cloud, cloud, transform);
+	pcl::toPCLPointCloud2(cloud, outMesh.cloud);
+	outMesh.polygons = inMesh.polygons;
 }
 
 void PCLViewer::displayCapturePoints(PCLStorage * obj, int pIndex)
@@ -185,36 +196,32 @@ void PCLViewer::displayCapturePoints(PCLStorage * obj, int pIndex)
 	{
 		std::string tagCapturePoints = obj->planes[pIndex].tagID + kCapturePointPrefix;
 
-		////REMOVE OLD WAYPOINTS
-		pclVisualizer->removeShape(tagCapturePoints + "start");
-		pclVisualizer->removeShape(tagCapturePoints + "end");
+		pcl::PolygonMesh wayMesh;
+		pcl::toPCLPointCloud2(*obj->planes[pIndex].capturePoints, wayMesh.cloud);
+		pcl::Vertices ver;
+		for (int i = 0; i < obj->planes[pIndex].capturePoints->size(); i++){
+			ver.vertices.push_back(i);
+		}
+		wayMesh.polygons.push_back(ver);
+		pclVisualizer->addPolylineFromPolygonMesh(wayMesh, tagCapturePoints + "_line");
 
 		//ADD NEW WAYPOINTS
-		PointCloudPtrT tCloud = obj->planes[pIndex].capturePoints;
 		RGBColor tColor = obj->planes[pIndex].color;
-		//drawBrokenLines(tCloud, tagCapturePoints);
-		pcl::PolygonMesh mesh;
-		pcl::toPCLPointCloud2(*tCloud, mesh.cloud);
-		pclVisualizer->addPolylineFromPolygonMesh(mesh,tagCapturePoints);
-		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, tColor.r*0.8, tColor.g*0.8, tColor.b*0.8, tagCapturePoints);
-
 		pclVisualizer->removePointCloud(tagCapturePoints);
-		pclVisualizer->addPointCloud<PointT>(tCloud, tagCapturePoints);
+		pclVisualizer->addPointCloud<PointT>(obj->planes[pIndex].capturePoints, tagCapturePoints);
 		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 5, tagCapturePoints);
-		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, tColor.r*0.8, tColor.g*0.8, tColor.b*0.8, tagCapturePoints);
+		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, 0.8, 0.8, 0.8, tagCapturePoints);
 
-		PointT startPoint = tCloud->points[0];
-		PointT endPoint = tCloud->points[tCloud->width - 1];
+		PointT startPoint = obj->planes[pIndex].capturePoints->points.front();
+		PointT stopPoint = obj->planes[pIndex].capturePoints->points.back();
+		Eigen::Affine3f startPose(Eigen::Translation3f(startPoint.x, startPoint.y, startPoint.z));
+		Eigen::Affine3f stopPose(Eigen::Translation3f(stopPoint.x, stopPoint.y, stopPoint.z));
 
-		//DRAW MARKERS
-		Eigen::Affine3f startPose, endPose;
-		startPose = Eigen::Translation3f(startPoint.x, startPoint.y, startPoint.z);
-		//pclVisualizer->addPolygonMesh(*startMesh, tagCapturePoints + "start");
-		//updatePolygonMeshUAV(*startMesh, startPose, tagCapturePoints + "start");
-
-		endPose = Eigen::Translation3f(endPoint.x, endPoint.y, endPoint.z);
-		//pclVisualizer->addPolygonMesh(*stopMesh, tagCapturePoints + "end");
-		//updatePolygonMeshUAV(*stopMesh, endPose, tagCapturePoints + "end");
+		pcl::PolygonMesh startFlag, stopFlag;
+		transformMesh(*startMesh, startPose.matrix(),startFlag);
+		transformMesh(*stopMesh, stopPose.matrix(), stopFlag);
+		pclVisualizer->addPolygonMesh(startFlag, tagCapturePoints + "start");
+		pclVisualizer->addPolygonMesh(stopFlag, tagCapturePoints + "stop");
 	}
 }
 
@@ -225,7 +232,9 @@ void PCLViewer::hideCapturePoints(PCLStorage * obj, int pIndex)
 		std::string tagCapturePoints = obj->planes[pIndex].tagID + kCapturePointPrefix;
 		//REMOVE OLD WAYPOINTS
 		pclVisualizer->removePointCloud(tagCapturePoints);
-		pclVisualizer->removeShape(tagCapturePoints);
+		pclVisualizer->removeShape(tagCapturePoints + "_line");
+		pclVisualizer->removeShape(tagCapturePoints + "start");
+		pclVisualizer->removeShape(tagCapturePoints + "stop");
 	}
 }
 
@@ -239,4 +248,73 @@ void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, 
 	pclVisualizer->addSphere(current_point, 100, 1, 0, 1, "sphere", 0);
 
 	if (pclStorage->isSegmented)	highlightSurface(pclStorage, current_point);
+}
+
+void pushCubeToPolygon(PointCloudPtrT cloud, std::vector<pcl::Vertices>&vertices, PointT center, float size)
+{
+	using namespace std;
+	int offset = cloud->points.size();
+
+	float x0 = center.x - size / 2;
+	float x1 = center.x + size / 2;
+	float y0 = center.y - size / 2;
+	float y1 = center.y + size / 2;
+
+	float z0 = center.z - size / 2;
+	float z1 = center.z + size / 2;
+
+	//point 0-3
+	cloud->push_back(PointT(x0, y0, z0));cloud->push_back(PointT(x1, y0, z0));cloud->push_back(PointT(x1, y1, z0));cloud->push_back(PointT(x0, y1, z0));
+
+	//point 4-7
+	cloud->push_back(PointT(x0, y0, z1));cloud->push_back(PointT(x1, y0, z1));cloud->push_back(PointT(x1, y1, z1));cloud->push_back(PointT(x0, y1, z1));
+
+	pcl::Vertices face0, face1, face2, face3, face4, face5;
+	int data0[] = { offset + 0, offset + 1, offset + 2, offset + 2, offset + 3, offset + 0 };
+	copy(&data0[0], &data0[6], back_inserter(face0.vertices));
+
+	int data1[] = { offset + 3, offset + 2, offset + 6, offset + 6, offset + 7, offset + 3 };
+	copy(&data1[0], &data1[6], back_inserter(face1.vertices));
+
+	int data2[] = { offset + 7, offset + 6, offset + 5, offset + 5, offset + 4, offset + 7 };
+	copy(&data2[0], &data2[6], back_inserter(face2.vertices));
+
+	int data3[] = { offset + 4, offset + 5, offset + 1, offset + 1, offset + 0, offset + 4 };
+	copy(&data3[0], &data3[6], back_inserter(face3.vertices));
+
+	int data4[] = { offset + 4, offset + 0, offset + 3, offset + 3, offset + 7, offset + 4 };
+	copy(&data4[0], &data4[6], back_inserter(face4.vertices));
+
+	int data5[] = { offset + 1, offset + 5, offset + 6, offset + 6, offset + 2, offset + 1 };
+	copy(&data5[0], &data5[6], back_inserter(face5.vertices));
+
+	vertices.push_back(face0);vertices.push_back(face1);vertices.push_back(face2);
+	vertices.push_back(face3);vertices.push_back(face4);vertices.push_back(face5);
+}
+
+void PCLViewer::displayRemainCloudAsCubes(PCLStorage * obj, double resolution /* = 500 */)
+{
+	PointCloudPtrT cloud = obj->cloud_remain;
+	pcl::octree::OctreePointCloudVoxelCentroid<PointT> octree(resolution);
+	octree.setInputCloud(cloud);
+	octree.addPointsFromInputCloud();
+
+	std::vector<PointT, Eigen::aligned_allocator<PointT> > voxelCenters;
+	octree.getOccupiedVoxelCenters(voxelCenters);
+	double voxelSideLen = sqrt(octree.getVoxelSquaredSideLen());
+	octree.deleteTree();
+
+	PointCloudPtrT cube_cloud;
+	cube_cloud.reset(new PointCloudT);
+	std::vector<pcl::Vertices> cube_vertices;
+
+	for (size_t i = 0; i < voxelCenters.size(); i++) {
+		pushCubeToPolygon(cube_cloud, cube_vertices, voxelCenters[i], voxelSideLen);
+	}
+	pclVisualizer->addPolygonMesh<PointT>(cube_cloud, cube_vertices, obj->tagID + "." + "remain");
+}
+
+void PCLViewer::hideRemainCloudAsCubes(PCLStorage * obj)
+{
+	pclVisualizer->removeShape(obj->tagID + "." + "remain");
 }

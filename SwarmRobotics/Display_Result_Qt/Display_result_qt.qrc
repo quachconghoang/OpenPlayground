@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="Display_Result_Qt">
+    <file>Resources/bbox.png</file>
     <file>Resources/rgbt.png</file>
     <file>Resources/show_origin_icon.png</file>
     <file>Resources/waypoint_save_icon.png</file>

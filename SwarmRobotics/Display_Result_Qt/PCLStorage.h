@@ -57,6 +57,7 @@ public:
 	~PCLStorage();
 	
 	PointCloudPtrT cloud_input;
+	PointCloudPtrT cloud_remain;
 	std::string cloud_input_id;
 	bool isSegmented;
 	int selected_Index;
@@ -79,6 +80,8 @@ public:
 		float capture_width, 
 		float capture_height, 
 		float attitude);
+	bool thePlaneHasWaypoint();
+	int saveWaypoint(std::string fileName);
 
 private:
 

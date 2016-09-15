@@ -25,13 +25,18 @@ public:
 	void displayCapturePoints(PCLStorage * obj, int pIndex);
 	void hideCapturePoints(PCLStorage * obj, int pIndex);
 
+	void displayRemainCloudAsCubes(PCLStorage * obj, double resolution = 500);
+	void hideRemainCloudAsCubes(PCLStorage * obj);
+
 	pcl::visualization::PCLVisualizer::Ptr pclVisualizer;
 	PCLStorage * pclStorage;
 	QVTKWidget * qvtkWidget;
 
+	pcl::PolygonMesh* startMesh;
+	pcl::PolygonMesh* stopMesh;
+
 private:
 	void pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void);
-	void drawBrokenLines(PointCloudPtrT wp, const std::string & id = "WP", int viewport = 0);
 };
 
 #endif // !PCL_VIEWER_H
