@@ -75,6 +75,10 @@ public:
 		int maxRetry, 
 		int minClusterSize, 
 		double clusterThreshold);
+	int createCapturePoint(uint cloud_index, 
+		float capture_width, 
+		float capture_height, 
+		float attitude);
 
 private:
 

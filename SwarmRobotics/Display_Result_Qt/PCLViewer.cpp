@@ -174,6 +174,61 @@ bool PCLViewer::setPointCloudSelected(const bool selected, const std::string &id
 	return (true);
 }
 
+void PCLViewer::drawBrokenLines(PointCloudPtrT wp, const std::string& id /* = "WP" */, int viewport /* = 0 */)
+{
+
+}
+
+void PCLViewer::displayCapturePoints(PCLStorage * obj, int pIndex)
+{
+	if (obj->planes[pIndex].capturePoints->size() > 0)
+	{
+		std::string tagCapturePoints = obj->planes[pIndex].tagID + kCapturePointPrefix;
+
+		////REMOVE OLD WAYPOINTS
+		pclVisualizer->removeShape(tagCapturePoints + "start");
+		pclVisualizer->removeShape(tagCapturePoints + "end");
+
+		//ADD NEW WAYPOINTS
+		PointCloudPtrT tCloud = obj->planes[pIndex].capturePoints;
+		RGBColor tColor = obj->planes[pIndex].color;
+		//drawBrokenLines(tCloud, tagCapturePoints);
+		pcl::PolygonMesh mesh;
+		pcl::toPCLPointCloud2(*tCloud, mesh.cloud);
+		pclVisualizer->addPolylineFromPolygonMesh(mesh,tagCapturePoints);
+		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, tColor.r*0.8, tColor.g*0.8, tColor.b*0.8, tagCapturePoints);
+
+		pclVisualizer->removePointCloud(tagCapturePoints);
+		pclVisualizer->addPointCloud<PointT>(tCloud, tagCapturePoints);
+		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 5, tagCapturePoints);
+		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, tColor.r*0.8, tColor.g*0.8, tColor.b*0.8, tagCapturePoints);
+
+		PointT startPoint = tCloud->points[0];
+		PointT endPoint = tCloud->points[tCloud->width - 1];
+
+		//DRAW MARKERS
+		Eigen::Affine3f startPose, endPose;
+		startPose = Eigen::Translation3f(startPoint.x, startPoint.y, startPoint.z);
+		//pclVisualizer->addPolygonMesh(*startMesh, tagCapturePoints + "start");
+		//updatePolygonMeshUAV(*startMesh, startPose, tagCapturePoints + "start");
+
+		endPose = Eigen::Translation3f(endPoint.x, endPoint.y, endPoint.z);
+		//pclVisualizer->addPolygonMesh(*stopMesh, tagCapturePoints + "end");
+		//updatePolygonMeshUAV(*stopMesh, endPose, tagCapturePoints + "end");
+	}
+}
+
+void PCLViewer::hideCapturePoints(PCLStorage * obj, int pIndex)
+{
+	if (obj->planes[pIndex].capturePoints)
+	{
+		std::string tagCapturePoints = obj->planes[pIndex].tagID + kCapturePointPrefix;
+		//REMOVE OLD WAYPOINTS
+		pclVisualizer->removePointCloud(tagCapturePoints);
+		pclVisualizer->removeShape(tagCapturePoints);
+	}
+}
+
 void PCLViewer::pp_callback(const pcl::visualization::PointPickingEvent& event, void* viewer_void)
 {
 	if (event.getPointIndex() == -1)

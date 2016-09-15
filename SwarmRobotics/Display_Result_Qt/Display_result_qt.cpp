@@ -18,6 +18,11 @@ Display_Result_Qt::Display_Result_Qt(QWidget *parent)
 	connect(processBox, SIGNAL(process(std::vector<double>)), this, SLOT(slot_Processing_Segment(std::vector<double>)));
 	connect(ui.actionSegmentation, SIGNAL(triggered()), processBox, SLOT(show()));
 
+	processBoxWaypoints = new ProcessBox(this);
+	processBoxWaypoints->setProcessMode(PMODE_WAYPOINTS);
+	connect(processBoxWaypoints, SIGNAL(process(std::vector<double>)), this, SLOT(slot_Processing_CapturePoints(std::vector<double>)));
+	connect(ui.actionGenCapturePoints, SIGNAL(triggered()), processBoxWaypoints, SLOT(show()));
+	
 	connect(ui.actionShowOrigin, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowOrigin(bool)));
 	connect(ui.actionShowGridCloud, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowGrid(bool)));
 	connect(ui.actionShow_Mesh, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowMesh(bool)));
@@ -72,7 +77,17 @@ void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 
 void Display_Result_Qt::slot_Processing_CapturePoints(std::vector<double> values)
 {
-	qDebug() << "Setup - 2... ";
+	processBoxWaypoints->hide();
+	if (values[0] != PROCESSBOX_CANCEL)
+	{
+		//m_viewer->hideCapturePoints(&m_storage, m_storage.selected_Index);
+		processParam.clear();
+		processParam = values;
+
+		m_cloudStorage.createCapturePoint(m_cloudStorage.selected_Index, processParam[1], processParam[2], processParam[0]);
+		QtConcurrent::run(std::bind(&PCLStorage::createCapturePoint, &m_cloudStorage,
+			m_cloudStorage.selected_Index, processParam[1], processParam[2], processParam[0]));
+	}
 }
 
 void Display_Result_Qt::slot_UI_ShowOrigin(bool isChecked)
@@ -127,11 +142,9 @@ void Display_Result_Qt::slot_UI_Finish(PS_WORKING_MODE mode)
 		break;
 
 	case  PSWM_NEW_WAYPOINT:
-		/*m_viewer->displayCapturePoints(&m_storage, m_storage.selected_Index);
-		m_viewer->unHighlightSurfaces(&m_storage);
-		slot_refresh3DWidget();
-		setCursor(Qt::ArrowCursor);
-		if (!m_storage.pathFinder->isPathFound) QMessageBox::warning(this, tr("Warning"), tr("Could not found waypoints to cover whole surface"));*/
+		m_viewer3D.displayCapturePoints(&m_cloudStorage, m_cloudStorage.selected_Index);
+		m_viewer3D.unHighlightSurfaces(&m_cloudStorage);
+
 		break;
 
 	case  PSWM_SEGMENT_DONE:
@@ -151,5 +164,8 @@ void Display_Result_Qt::slot_UI_Finish(PS_WORKING_MODE mode)
 
 void Display_Result_Qt::slot_UI_PlaneChanged(bool isSelected)
 {
-
+	ui.actionChangeColor->setEnabled(isSelected);
+	//ui.actionEdit_Boundary->setEnabled(isSelected);
+	//ui.actionDelete_Plane->setEnabled(isSelected);
+	ui.actionGenCapturePoints->setEnabled(isSelected);
 }

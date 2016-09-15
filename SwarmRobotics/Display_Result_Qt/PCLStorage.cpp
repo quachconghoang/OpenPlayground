@@ -230,3 +230,17 @@ void PCLStorage::segmentPointcloud(double minPlaneArea,
 	//cloud_remain = cloud_blob;
 	isSegmented = true;
 }
+
+int PCLStorage::createCapturePoint(uint cloud_index, float capture_width, float capture_height, float attitude)
+{
+	if (planes[cloud_index].pointCloud->width == 0)return 1;//error
+	int i = cloud_index;
+	planes[cloud_index].capturePoints = helper::generate_CapturePoint(
+		planes[i].modelCoefficients,
+		planes[i].hullCloud,
+		planes[i].blockCloud,
+		capture_width, capture_height, attitude);
+
+	emit visualConnector->signal_processFinish(PSWM_NEW_WAYPOINT);
+	return 0;
+}
