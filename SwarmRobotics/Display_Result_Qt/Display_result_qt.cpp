@@ -18,8 +18,11 @@ Display_Result_Qt::Display_Result_Qt(QWidget *parent)
 	connect(processBox, SIGNAL(process(std::vector<double>)), this, SLOT(slot_Processing_Segment(std::vector<double>)));
 	connect(ui.actionSegmentation, SIGNAL(triggered()), processBox, SLOT(show()));
 
-	this->visualConnector = new VisualConnector(this);
+	connect(ui.actionShowOrigin, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowOrigin(bool)));
+	connect(ui.actionShowGridCloud, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowGrid(bool)));
+	connect(ui.actionShow_Mesh, SIGNAL(triggered(bool)), this, SLOT(slot_UI_ShowMesh(bool)));
 
+	this->visualConnector = new VisualConnector(this);
 	m_cloudStorage.visualConnector = this->visualConnector;
 	connect(visualConnector, SIGNAL(signal_planeDidSelected(bool)), this, SLOT(slot_UI_PlaneChanged(bool)));
 	qRegisterMetaType<PS_WORKING_MODE>("PS_WORKING_MODE");
@@ -39,6 +42,9 @@ void Display_Result_Qt::slot_IO_OpenFilePCD()
 	{
 		m_cloudStorage.setInputCloud(fileName.toStdString());
 		m_viewer3D.displayRawData(m_cloudStorage);
+		ui.actionSegmentation->setEnabled(true);
+		ui.actionShowOrigin->setEnabled(true);
+		ui.actionShowOrigin->setChecked(true);
 	}
 }
 
@@ -57,6 +63,9 @@ void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 		processParam = values;
 
 		QtConcurrent::run(std::bind(&PCLStorage::segmentParams, &m_cloudStorage, processParam));
+		
+		ui.actionSegmentation->setEnabled(false);
+		ui.actionShowGridCloud->setEnabled(true);
 	}
 	
 }
@@ -64,6 +73,39 @@ void Display_Result_Qt::slot_Processing_Segment(std::vector<double> values)
 void Display_Result_Qt::slot_Processing_CapturePoints(std::vector<double> values)
 {
 	qDebug() << "Setup - 2... ";
+}
+
+void Display_Result_Qt::slot_UI_ShowOrigin(bool isChecked)
+{
+	using namespace pcl::visualization;
+	if (isChecked){	m_viewer3D.pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 1, m_cloudStorage.tagID);}
+	else{ m_viewer3D.pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 0, m_cloudStorage.tagID); }
+	ui.actionShowOrigin->setChecked(isChecked);
+	m_viewer3D.qvtkWidget->update();
+}
+
+void Display_Result_Qt::slot_UI_ShowGrid(bool isChecked)
+{
+	if (isChecked){
+		ui.actionShow_Mesh->setEnabled(true);
+		m_viewer3D.unHighlightSurfaces(&m_cloudStorage);
+		m_viewer3D.displayGridSurfaces(&m_cloudStorage);
+	}
+	else{
+		ui.actionShow_Mesh->setChecked(false);
+		ui.actionShow_Mesh->setEnabled(false);
+		m_viewer3D.unHighlightSurfaces(&m_cloudStorage);
+		m_viewer3D.hideMeshSurfaces(&m_cloudStorage);
+		m_viewer3D.displaySurfaces(&m_cloudStorage);
+	}
+	m_viewer3D.qvtkWidget->update();
+}
+
+void Display_Result_Qt::slot_UI_ShowMesh(bool isChecked)
+{
+	if (isChecked)	m_viewer3D.displayMeshSurfaces(&m_cloudStorage);
+	else			m_viewer3D.hideMeshSurfaces(&m_cloudStorage);
+	m_viewer3D.qvtkWidget->update();
 }
 
 void Display_Result_Qt::slot_UI_BarUpdate(int val)

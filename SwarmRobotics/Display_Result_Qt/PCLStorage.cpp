@@ -51,6 +51,7 @@ void PCLStorage::setInputCloud(std::string fileName)
 {
 	cloud_input.reset(new PointCloudT);
 	pcl::io::loadPCDFile(fileName, *cloud_input);
+	cloud_input = helper::downSampling(cloud_input, kDOWN_SIZE);
 }
 
 void PCLStorage::clearData()

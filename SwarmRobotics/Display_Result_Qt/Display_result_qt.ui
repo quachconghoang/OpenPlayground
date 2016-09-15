@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -50,7 +50,10 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen_PCD"/>
+   <addaction name="actionSaveCapturePoints"/>
+   <addaction name="separator"/>
    <addaction name="actionShowOrigin"/>
+   <addaction name="actionShowGridCloud"/>
    <addaction name="actionShow_Mesh"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -65,9 +68,9 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionSegmentation"/>
-   <addaction name="actionChangeColor"/>
    <addaction name="actionGenCapturePoints"/>
-   <addaction name="actionSaveCapturePoints"/>
+   <addaction name="separator"/>
+   <addaction name="actionChangeColor"/>
   </widget>
   <action name="actionOpen_PCD">
    <property name="icon">
@@ -79,6 +82,12 @@
    </property>
   </action>
   <action name="actionShow_Mesh">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/backlines.png</normaloff>:/Display_Result_Qt/Resources/backlines.png</iconset>
@@ -88,6 +97,9 @@
    </property>
   </action>
   <action name="actionSegmentation">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/segment.png</normaloff>:/Display_Result_Qt/Resources/segment.png</iconset>
@@ -97,6 +109,12 @@
    </property>
   </action>
   <action name="actionShowOrigin">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/show_origin_icon.png</normaloff>:/Display_Result_Qt/Resources/show_origin_icon.png</iconset>
@@ -106,6 +124,9 @@
    </property>
   </action>
   <action name="actionChangeColor">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/rgbt.png</normaloff>:/Display_Result_Qt/Resources/rgbt.png</iconset>
@@ -115,6 +136,9 @@
    </property>
   </action>
   <action name="actionGenCapturePoints">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/waypoint_icon.png</normaloff>:/Display_Result_Qt/Resources/waypoint_icon.png</iconset>
@@ -124,12 +148,30 @@
    </property>
   </action>
   <action name="actionSaveCapturePoints">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="Display_Result_Qt.qrc">
      <normaloff>:/Display_Result_Qt/Resources/waypoint_save_icon.png</normaloff>:/Display_Result_Qt/Resources/waypoint_save_icon.png</iconset>
    </property>
    <property name="text">
     <string>SaveCapturePoints</string>
+   </property>
+  </action>
+  <action name="actionShowGridCloud">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="Display_Result_Qt.qrc">
+     <normaloff>:/Display_Result_Qt/Resources/GenMesh.png</normaloff>:/Display_Result_Qt/Resources/GenMesh.png</iconset>
+   </property>
+   <property name="text">
+    <string>ShowGridCloud</string>
    </property>
   </action>
  </widget>

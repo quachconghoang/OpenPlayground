@@ -39,7 +39,7 @@ void PCLViewer::displayRawData(PCLStorage & _cloudStorage)
 	if (_cloudStorage.cloud_input)
 	{
 		pclVisualizer->removeAllPointClouds();
-		pclVisualizer->addPointCloud(_cloudStorage.cloud_input, _cloudStorage.cloud_input_id);
+		pclVisualizer->addPointCloud(_cloudStorage.cloud_input, _cloudStorage.tagID);
 	}
 }
 
@@ -61,6 +61,48 @@ void PCLViewer::displaySurfaces(PCLStorage * obj)
 		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagHull_ID);
 
 		obj->planes[i].displayingMode = PLANE_RAW;
+	}
+}
+
+void PCLViewer::displayGridSurfaces(PCLStorage * obj)
+{
+	for (int i = 0; i < obj->planes.size(); i++)
+	{
+		std::string tagHull_ID = obj->planes[i].tagID + kHullPrefix;
+		pclVisualizer->removeShape(tagHull_ID);
+		pclVisualizer->addPolygon<PointT>(obj->planes[i].hullCloud, tagHull_ID);
+
+		std::string tagGrid_ID = obj->planes[i].tagID + kSurfacePrefix;
+		pclVisualizer->updatePointCloud<PointT>(obj->planes[i].gridCloud, tagGrid_ID);
+
+		RGBColor cl = obj->planes[i].color;
+		pclVisualizer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagGrid_ID);
+		//setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE,6,tagGrid_ID);
+		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagHull_ID);
+		obj->planes[i].displayingMode = PLANE_GRID;
+	}
+}
+
+void PCLViewer::displayMeshSurfaces(PCLStorage * obj)
+{
+	for (int i = 0; i < obj->planes.size(); i++)
+	{
+		std::string tagMesh_ID = obj->planes[i].tagID + kMeshPrefix;
+		pclVisualizer->addPolylineFromPolygonMesh(*obj->planes[i].mesh, tagMesh_ID);
+		RGBColor cl = obj->planes[i].color;
+		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_COLOR, cl.r, cl.g, cl.b, tagMesh_ID);
+		pclVisualizer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, 1, tagMesh_ID);
+		obj->planes[i].displayingMode = PLANE_MESH;
+	}
+}
+
+void PCLViewer::hideMeshSurfaces(PCLStorage * obj)
+{
+	for (int i = 0; i < obj->planes.size(); i++)
+	{
+		std::string tagMesh_ID = obj->planes[i].tagID + kMeshPrefix;
+		pclVisualizer->removeShape(tagMesh_ID);
+		obj->planes[i].displayingMode = PLANE_GRID;
 	}
 }
 

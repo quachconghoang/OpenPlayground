@@ -14,6 +14,9 @@ public:
 	void setupPCLViewer(QVTKWidget * _qvtkWidget, float axeSize = 1000);
 	void displayRawData(PCLStorage & _cloudStorage);
 	void displaySurfaces(PCLStorage * obj);
+	void displayGridSurfaces(PCLStorage * obj);
+	void displayMeshSurfaces(PCLStorage * obj);
+	void hideMeshSurfaces(PCLStorage * obj);
 
 	void highlightSurface(PCLStorage * obj, pcl::PointXYZ p);
 	void unHighlightSurfaces(PCLStorage * obj);

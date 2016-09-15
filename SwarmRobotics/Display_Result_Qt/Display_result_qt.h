@@ -39,10 +39,13 @@ private:
 
 	void slot_Processing_CapturePoints(std::vector<double> values);
 
+	void slot_UI_ShowOrigin(bool isChecked);
+	void slot_UI_ShowGrid(bool isChecked);
+	void slot_UI_ShowMesh(bool isChecked);
+
 	void slot_UI_BarUpdate(int val);
 	void slot_UI_Finish(PS_WORKING_MODE mode);
 	void slot_UI_PlaneChanged(bool isSelected);
-
 };
 
 #endif // DISPLAY_RESULT_QT_H
