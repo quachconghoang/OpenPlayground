@@ -11,10 +11,8 @@ import tarfile
 from IPython.display import display, Image
 from scipy import ndimage
 from sklearn.linear_model import LogisticRegression
-
-import six.moves.urllib.request
-import six.moves.cPickle as pickle
-
+from six.moves.urllib.request import urlretrieve
+from six.moves import cPickle as pickle
 # import tensorflow as tf
 
 
@@ -53,13 +51,6 @@ def maybe_download(filename, expected_bytes, force=False):
             'Failed to verify ' + filename + '. Can you get to it with a browser?')
     return filename
 
-
-train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
-test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
-
-num_classes = 10
-np.random.seed(133)
-
 def maybe_extract(filename, force=False):
     root = os.path.splitext(os.path.splitext(filename)[0])[0]  # remove .tar.gz
     if os.path.isdir(root) and not force:
@@ -80,13 +71,6 @@ def maybe_extract(filename, force=False):
                 num_classes, len(data_folders)))
     print(data_folders)
     return data_folders
-
-train_folders = maybe_extract(train_filename)
-test_folders = maybe_extract(test_filename)
-
-image_size = 28  # Pixel width and height.
-pixel_depth = 255.0  # Number of levels per pixel.
-
 
 def load_letter(folder, min_num_images):
     """Load the data for a single letter label."""
@@ -117,7 +101,6 @@ def load_letter(folder, min_num_images):
     print('Standard deviation:', np.std(dataset))
     return dataset
 
-
 def maybe_pickle(data_folders, min_num_images_per_class, force=False):
     dataset_names = []
     for folder in data_folders:
@@ -137,6 +120,19 @@ def maybe_pickle(data_folders, min_num_images_per_class, force=False):
 
     return dataset_names
 
+print('Start - Problem 01: Checking notMNIST dataset.')
+
+train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
+test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
+
+num_classes = 10
+np.random.seed(133)
+
+train_folders = maybe_extract(train_filename)
+test_folders = maybe_extract(test_filename)
+
+image_size = 28  # Pixel width and height.
+pixel_depth = 255.0  # Number of levels per pixel.
 
 train_datasets = maybe_pickle(train_folders, 45000)
 test_datasets = maybe_pickle(test_folders, 1800)
@@ -145,6 +141,8 @@ print('End - Problem 01')
 
 import random
 import hashlib
+
+print('Start - Problem 02: display dataset')
 
 def disp_8_img(imgs, titles):
   """Display subplot with 8 images or less"""
@@ -170,10 +168,100 @@ def disp_sample_pickles(data_folders):
     plt.axis('off')
     plt.imshow(img)
 
-
-disp_sample_pickles(train_folders)
-plt.waitforbuttonpress();
-disp_sample_pickles(test_folders)
-plt.waitforbuttonpress();
+#disp_sample_pickles(train_folders)
+#disp_sample_pickles(test_folders)
+#plt.waitforbuttonpress();
 
 print('End - Problem 02')
+
+print('Start - Problem 03: convert dataset into 3D array')
+
+
+def make_arrays(nb_rows, img_size):
+    if nb_rows:
+        dataset = np.ndarray((nb_rows, img_size, img_size), dtype=np.float32)
+        labels = np.ndarray(nb_rows, dtype=np.int32)
+    else:
+        dataset, labels = None, None
+    return dataset, labels
+
+
+def merge_datasets(pickle_files, train_size, valid_size=0):
+    num_classes = len(pickle_files)
+    valid_dataset, valid_labels = make_arrays(valid_size, image_size)
+    train_dataset, train_labels = make_arrays(train_size, image_size)
+    vsize_per_class = valid_size // num_classes
+    tsize_per_class = train_size // num_classes
+
+    start_v, start_t = 0, 0
+    end_v, end_t = vsize_per_class, tsize_per_class
+    end_l = vsize_per_class + tsize_per_class
+    for label, pickle_file in enumerate(pickle_files):
+        try:
+            with open(pickle_file, 'rb') as f:
+                letter_set = pickle.load(f)
+                # let's shuffle the letters to have random validation and training set
+                np.random.shuffle(letter_set)
+                if valid_dataset is not None:
+                    valid_letter = letter_set[:vsize_per_class, :, :]
+                    valid_dataset[start_v:end_v, :, :] = valid_letter
+                    valid_labels[start_v:end_v] = label
+                    start_v += vsize_per_class
+                    end_v += vsize_per_class
+
+                train_letter = letter_set[vsize_per_class:end_l, :, :]
+                train_dataset[start_t:end_t, :, :] = train_letter
+                train_labels[start_t:end_t] = label
+                start_t += tsize_per_class
+                end_t += tsize_per_class
+        except Exception as e:
+            print('Unable to process data from', pickle_file, ':', e)
+            raise
+
+    return valid_dataset, valid_labels, train_dataset, train_labels
+
+train_size = 200000
+valid_size = 10000
+test_size = 10000
+
+valid_dataset, valid_labels, train_dataset, train_labels = merge_datasets(
+  train_datasets, train_size, valid_size)
+
+_, _, test_dataset, test_labels = merge_datasets(test_datasets, test_size)
+
+print('Training:', train_dataset.shape, train_labels.shape)
+print('Validation:', valid_dataset.shape, valid_labels.shape)
+print('Testing:', test_dataset.shape, test_labels.shape)
+
+print('End - Problem 03')
+
+
+print('Start - Problem 04: Dump dataset')
+pickle_file = 'notMNIST.pickle'
+
+try:
+  f = open(pickle_file, 'wb')
+  save = {
+    'train_dataset': train_dataset,
+    'train_labels': train_labels,
+    'valid_dataset': valid_dataset,
+    'valid_labels': valid_labels,
+    'test_dataset': test_dataset,
+    'test_labels': test_labels,
+    }
+  pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+  f.close()
+except Exception as e:
+  print('Unable to save data to', pickle_file, ':', e)
+  raise
+print('End - Problem 04')
+
+
+print('Start - Problem 05: Finding overlap')
+
+print('End - Problem 05')
+
+
+print('Start - Problem 06: LogisticRegression')
+
+print('End - Problem 06')
