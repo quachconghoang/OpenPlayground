@@ -1,19 +1,14 @@
 # import tensorflow as tf
 import numpy as np
 
-scores = np.array([3.0, 1.0, 0.2])
-#print(softmax())
+x = 1000000000;
 
-def softmax(x):
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
+for iter in xrange(1000000):
+    x+= 1e-6
 
-print(softmax(scores))
+x-= 1000000000;
 
-# Plot softmax curves
-import matplotlib.pyplot as plt
+print(x);
 
-x = np.arange(-2.0, 6.0, 0.1)
-scores = np.vstack([x, np.ones_like(x), 0.2*np.ones_like(x)])
 
-plt.plot(x, softmax(scores).T, linewidth=2);
-plt.show()
+#   https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/udacity/1_notmnist.ipynb
