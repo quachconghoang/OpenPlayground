@@ -4,7 +4,7 @@ import tensorflow as tf
 from six.moves import cPickle as pickle
 from six.moves import range
 
-print("============== \n 1. Loading the dataset")
+print("\n==============\n 1. Loading the dataset")
 pickle_file = 'notMNIST.pickle'
 
 with open(pickle_file, 'rb') as f:
@@ -42,7 +42,7 @@ print('Test set', test_dataset.shape, test_labels.shape)
 
 
 
-print("=============== \n 2. Training with gradient descent")
+print("=============== \n\n\n 2. Training with gradient descent")
 # With gradient descent training, even this much data is prohibitive.
 # Subset the training data for faster turnaround.
 # With gradient descent training, even this much data is prohibitive.
@@ -116,7 +116,7 @@ with tf.Session(graph=graph) as session:
   print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(), test_labels))
 
 
-print("=============== \n 3. Training with SGD")
+print("=============== \n\n\n 3. Training with SGD")
 
 batch_size = 128
 

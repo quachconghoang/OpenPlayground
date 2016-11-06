@@ -199,7 +199,7 @@ def merge_datasets(pickle_files, train_size, valid_size=0):
     for label, pickle_file in enumerate(pickle_files):
         try:
             with open(pickle_file, 'rb') as f:
-                letter_set = pickle.load(f)
+                letter_set = pickle.load(f,encoding='latin1')
                 # let's shuffle the letters to have random validation and training set
                 np.random.shuffle(letter_set)
                 if valid_dataset is not None:
@@ -224,14 +224,22 @@ train_size = 200000
 valid_size = 10000
 test_size = 10000
 
-valid_dataset, valid_labels, train_dataset, train_labels = merge_datasets(
-  train_datasets, train_size, valid_size)
+valid_dataset, valid_labels, train_dataset, train_labels = merge_datasets(train_datasets, train_size, valid_size)
 
 _, _, test_dataset, test_labels = merge_datasets(test_datasets, test_size)
 
 print('Training:', train_dataset.shape, train_labels.shape)
 print('Validation:', valid_dataset.shape, valid_labels.shape)
 print('Testing:', test_dataset.shape, test_labels.shape)
+
+def randomize(dataset, labels):
+  permutation = np.random.permutation(labels.shape[0])
+  shuffled_dataset = dataset[permutation,:,:]
+  shuffled_labels = labels[permutation]
+  return shuffled_dataset, shuffled_labels
+train_dataset, train_labels = randomize(train_dataset, train_labels)
+test_dataset, test_labels = randomize(test_dataset, test_labels)
+valid_dataset, valid_labels = randomize(valid_dataset, valid_labels)
 
 print('End - Problem 03')
 
@@ -255,9 +263,39 @@ except Exception as e:
   print('Unable to save data to', pickle_file, ':', e)
   raise
 print('End - Problem 04')
+exit()
 
 
 print('Start - Problem 05: Finding overlap')
+# measure how much overlap there is between training, validation and test samples
+set_valid_dataset = set([hash(str(x)) for x in valid_dataset])
+set_test_dataset = set([hash(str(x)) for x in test_dataset])
+set_train_dataset = set([hash(str(x)) for x in train_dataset])
+
+print('valid data set: ' + str(len(valid_dataset)) + ' set: ' + str(len(set_valid_dataset)))
+print('test data set: ' + str(len(test_dataset)) + ' set: ' + str(len(set_test_dataset)))
+print('train data set: ' + str(len(train_dataset)) + ' set: ' + str(len(set_train_dataset)))
+
+
+overlap_test_valid = set_test_dataset - set_valid_dataset
+print('overlap test valid: ' + str(len(overlap_test_valid)))
+overlap_train_valid = set_train_dataset - set_valid_dataset
+print('overlap train valid: ' + str(len(overlap_train_valid)))
+overlap_train_test = set_train_dataset - set_test_dataset
+print('overlap train test: ' + str(len(overlap_train_test)))
+
+from hashlib import md5
+
+set_valid_dataset_2 = set([ md5(x).hexdigest() for x in valid_dataset])
+set_test_dataset_2 = set([ md5(x).hexdigest() for x in test_dataset])
+set_train_dataset_2 = set([ md5(x).hexdigest() for x in train_dataset])
+
+overlap_test_valid_2 = set_test_dataset_2 - set_valid_dataset_2
+print('overlap test valid: ' + str(len(overlap_test_valid_2)))
+overlap_train_valid_2 = set_train_dataset_2 - set_valid_dataset_2
+print('overlap train valid: ' + str(len(overlap_train_valid_2)))
+overlap_train_test_2 = set_train_dataset_2 - set_test_dataset_2
+print('overlap train test: ' + str(len(overlap_train_test_2)))
 
 print('End - Problem 05')
 
