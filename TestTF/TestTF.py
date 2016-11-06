@@ -267,35 +267,35 @@ exit()
 
 
 print('Start - Problem 05: Finding overlap')
-# measure how much overlap there is between training, validation and test samples
-set_valid_dataset = set([hash(str(x)) for x in valid_dataset])
-set_test_dataset = set([hash(str(x)) for x in test_dataset])
-set_train_dataset = set([hash(str(x)) for x in train_dataset])
-
-print('valid data set: ' + str(len(valid_dataset)) + ' set: ' + str(len(set_valid_dataset)))
-print('test data set: ' + str(len(test_dataset)) + ' set: ' + str(len(set_test_dataset)))
-print('train data set: ' + str(len(train_dataset)) + ' set: ' + str(len(set_train_dataset)))
-
-
-overlap_test_valid = set_test_dataset - set_valid_dataset
-print('overlap test valid: ' + str(len(overlap_test_valid)))
-overlap_train_valid = set_train_dataset - set_valid_dataset
-print('overlap train valid: ' + str(len(overlap_train_valid)))
-overlap_train_test = set_train_dataset - set_test_dataset
-print('overlap train test: ' + str(len(overlap_train_test)))
-
-from hashlib import md5
-
-set_valid_dataset_2 = set([ md5(x).hexdigest() for x in valid_dataset])
-set_test_dataset_2 = set([ md5(x).hexdigest() for x in test_dataset])
-set_train_dataset_2 = set([ md5(x).hexdigest() for x in train_dataset])
-
-overlap_test_valid_2 = set_test_dataset_2 - set_valid_dataset_2
-print('overlap test valid: ' + str(len(overlap_test_valid_2)))
-overlap_train_valid_2 = set_train_dataset_2 - set_valid_dataset_2
-print('overlap train valid: ' + str(len(overlap_train_valid_2)))
-overlap_train_test_2 = set_train_dataset_2 - set_test_dataset_2
-print('overlap train test: ' + str(len(overlap_train_test_2)))
+# # measure how much overlap there is between training, validation and test samples
+# set_valid_dataset = set([hash(str(x)) for x in valid_dataset])
+# set_test_dataset = set([hash(str(x)) for x in test_dataset])
+# set_train_dataset = set([hash(str(x)) for x in train_dataset])
+#
+# print('valid data set: ' + str(len(valid_dataset)) + ' set: ' + str(len(set_valid_dataset)))
+# print('test data set: ' + str(len(test_dataset)) + ' set: ' + str(len(set_test_dataset)))
+# print('train data set: ' + str(len(train_dataset)) + ' set: ' + str(len(set_train_dataset)))
+#
+#
+# overlap_test_valid = set_test_dataset - set_valid_dataset
+# print('overlap test valid: ' + str(len(overlap_test_valid)))
+# overlap_train_valid = set_train_dataset - set_valid_dataset
+# print('overlap train valid: ' + str(len(overlap_train_valid)))
+# overlap_train_test = set_train_dataset - set_test_dataset
+# print('overlap train test: ' + str(len(overlap_train_test)))
+#
+# from hashlib import md5
+#
+# set_valid_dataset_2 = set([ md5(x).hexdigest() for x in valid_dataset])
+# set_test_dataset_2 = set([ md5(x).hexdigest() for x in test_dataset])
+# set_train_dataset_2 = set([ md5(x).hexdigest() for x in train_dataset])
+#
+# overlap_test_valid_2 = set_test_dataset_2 - set_valid_dataset_2
+# print('overlap test valid: ' + str(len(overlap_test_valid_2)))
+# overlap_train_valid_2 = set_train_dataset_2 - set_valid_dataset_2
+# print('overlap train valid: ' + str(len(overlap_train_valid_2)))
+# overlap_train_test_2 = set_train_dataset_2 - set_test_dataset_2
+# print('overlap train test: ' + str(len(overlap_train_test_2)))
 
 print('End - Problem 05')
 

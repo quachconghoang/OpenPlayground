@@ -40,8 +40,6 @@ print('Test set', test_dataset.shape, test_labels.shape)
 
 
 
-
-
 print("=============== \n\n\n 2. Training with gradient descent")
 # With gradient descent training, even this much data is prohibitive.
 # Subset the training data for faster turnaround.
@@ -52,8 +50,7 @@ train_subset = 10000
 graph = tf.Graph()
 with graph.as_default():
     # Input data.
-    # Load the training, validation and test data into constants that are
-    # attached to the graph.
+    # Load the training, validation and test data into constants that are attached to the graph.
     tf_train_dataset = tf.constant(train_dataset[:train_subset, :])
     tf_train_labels = tf.constant(train_labels[:train_subset])
     tf_valid_dataset = tf.constant(valid_dataset)
