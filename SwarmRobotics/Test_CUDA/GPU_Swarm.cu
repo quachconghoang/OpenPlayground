@@ -130,8 +130,8 @@ __global__ void Moving_Kernel(DPSO::Particle * p, int bestParticleID)
 
 		if ((i != found_at) && (found_at != -1))
 		{
-			_par->velocity[i].from = i;
-			_par->velocity[i].to = found_at;
+			_par->velocity[_velocitySize].from = i;
+			_par->velocity[_velocitySize].to = found_at;
 			_velocitySize++;
 		}
 	}
@@ -314,7 +314,7 @@ namespace DPSO
 		int moves_since_best_changed = 0;
 		int64 startTime = cv::getCPUTickCount();
 		int iterations = 0;
-		int stoppingCount = 10;
+		int stoppingCount = 20;
 		while (moves_since_best_changed <= stoppingCount){
 			bool best_changed = false;
 			iterations++;
