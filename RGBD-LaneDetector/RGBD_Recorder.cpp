@@ -21,7 +21,6 @@ void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
 int main()
 {
 	runRealsense();
-	//runOpenNI2();
 }
 
 #include "librealsense/rs.hpp"
