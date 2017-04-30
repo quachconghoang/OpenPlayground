@@ -55,8 +55,8 @@ int runRealsense()
 
 	// Retrieve camera parameters for mapping between depth and color
 	rs::intrinsics depth_intrin = dev->get_stream_intrinsics(rs::stream::depth);
-	// rs::extrinsics depth_to_color = dev->get_extrinsics(rs::stream::depth, rs::stream::depth_aligned_to_rectified_color);
-	//rs::intrinsics color_intrin = dev->get_stream_intrinsics(rs::stream::color_aligned_to_depth);
+	rs::extrinsics depth_to_color = dev->get_extrinsics(rs::stream::depth, rs::stream::color);
+	rs::intrinsics color_intrin = dev->get_stream_intrinsics(rs::stream::color);
 	
 	recordFile << "# Depth instr: " << std::fixed
 		<< depth_intrin.width << " "
@@ -85,12 +85,11 @@ int runRealsense()
 		}
 
 		// Retrieve our images
-		//const uint16_t * depth_image = (const uint16_t *)dev->get_frame_data(rs::stream::depth);
-		//const uint8_t * color_image = (const uint8_t *)dev->get_frame_data(rs::stream::color);
 		depthMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_16UC1, (ushort*)dev->get_frame_data(rs::stream::depth));
 		colorMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_8UC3, (uchar*)dev->get_frame_data(rs::stream::color_aligned_to_depth));
+		/*depthMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_16UC1, (ushort*)dev->get_frame_data(rs::stream::depth_aligned_to_color));
+		colorMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_8UC3, (uchar*)dev->get_frame_data(rs::stream::color));*/
 
-		//depthMat *= 5;
 		cv::Mat bgrMat;
 		if (frameCount == 0)
 		{
