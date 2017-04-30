@@ -26,8 +26,8 @@ ImgProc3D::LaneDetector::~LaneDetector()
 void ImgProc3D::LaneDetector::setCamera(ImgProc3D::IntrMode _mode)
 {
 	m_camInfo = ImgProc3D::Intr(_mode);
-	if (_mode == ImgProc3D::IntrMode_320x240_IMG || _mode == ImgProc3D::IntrMode_320x240_RAW) {	smallImage = true; }
-	else {	smallImage = false;	}
+	//if (_mode == ImgProc3D::IntrMode_320x240_IMG || _mode == ImgProc3D::IntrMode_320x240_RAW) {	smallImage = true; }
+	//else {	smallImage = false;	}
 }
 
 void ImgProc3D::LaneDetector::processFrame(cv::Mat & rgbMat, cv::Mat & dMat)

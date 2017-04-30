@@ -24,7 +24,7 @@ cuda_add_library(libImgProcCUDA STATIC ${ImgProcCUDA_src})
 target_link_libraries( libImgProcCUDA ${OpenCV_LIBS})
 
 add_executable( Test_Pointcloud Test_Pointcloud.cpp )
-target_link_libraries( Test_Pointcloud ${OpenCV_LIBS} )
+target_link_libraries( Test_Pointcloud ${OpenCV_LIBS} libImgProcCUDA)
 
 find_package( RealSense REQUIRED)
 include_directories(${RealSense_INCLUDE_DIR})

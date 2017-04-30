@@ -6,7 +6,7 @@
 
 
 bool programShouldClose;
-#define _UPDATE_TIME  1.0
+#define _UPDATE_TIME  0.2
 std::string folderName = "Sample";
 //std::string dirPath = "Sample/";
 std::string depthDir = "depth/";
@@ -49,12 +49,14 @@ int runRealsense()
 	dev->enable_stream(rs::stream::depth, rs::preset::best_quality);
 	dev->enable_stream(rs::stream::color, rs::preset::best_quality);
 	dev->set_option(rs::option::r200_lr_auto_exposure_enabled,true);
+	dev->set_option(rs::option::color_enable_auto_exposure, true);
+	dev->set_option(rs::option::color_enable_auto_white_balance, true);
 	dev->start();
 
 	// Retrieve camera parameters for mapping between depth and color
-	rs::intrinsics depth_intrin = dev->get_stream_intrinsics(rs::stream::depth_aligned_to_rectified_color);
+	rs::intrinsics depth_intrin = dev->get_stream_intrinsics(rs::stream::depth);
 	// rs::extrinsics depth_to_color = dev->get_extrinsics(rs::stream::depth, rs::stream::depth_aligned_to_rectified_color);
-	rs::intrinsics color_intrin = dev->get_stream_intrinsics(rs::stream::rectified_color);
+	//rs::intrinsics color_intrin = dev->get_stream_intrinsics(rs::stream::color_aligned_to_depth);
 	
 	recordFile << "# Depth instr: " << std::fixed
 		<< depth_intrin.width << " "
@@ -63,7 +65,7 @@ int runRealsense()
 		<< depth_intrin.fy << " "
 		<< depth_intrin.ppx << " "
 		<< depth_intrin.ppy << "\n";
-	depthVizMat = cv::Mat(color_intrin.height, color_intrin.width, CV_8UC3);
+	depthVizMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_8UC3);
 
 	int indexData = 0;
 	bool isRecording = false;
@@ -85,20 +87,18 @@ int runRealsense()
 		// Retrieve our images
 		//const uint16_t * depth_image = (const uint16_t *)dev->get_frame_data(rs::stream::depth);
 		//const uint8_t * color_image = (const uint8_t *)dev->get_frame_data(rs::stream::color);
-		depthMat = cv::Mat(color_intrin.height, color_intrin.width, CV_16UC1, (ushort*)dev->get_frame_data(rs::stream::depth_aligned_to_rectified_color));
-		colorMat = cv::Mat(color_intrin.height, color_intrin.width, CV_8UC3, (uchar*)dev->get_frame_data(rs::stream::rectified_color));
+		depthMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_16UC1, (ushort*)dev->get_frame_data(rs::stream::depth));
+		colorMat = cv::Mat(depth_intrin.height, depth_intrin.width, CV_8UC3, (uchar*)dev->get_frame_data(rs::stream::color_aligned_to_depth));
 
 		//depthMat *= 5;
 		cv::Mat bgrMat;
-		cv::cvtColor(colorMat, bgrMat, cv::COLOR_RGB2BGR);
-
-		colorizeDepthImage(depthMat, depthVizMat);
-
-		cv::imshow("depth IMG", depthVizMat);
-		cv::imshow("color IMG", bgrMat);
-
-		float scale = dev->get_depth_scale();
-
+		if (frameCount == 0)
+		{
+			cv::cvtColor(colorMat, bgrMat, cv::COLOR_RGB2BGR);
+			colorizeDepthImage(depthMat, depthVizMat);
+			cv::imshow("depth IMG", depthVizMat);
+			cv::imshow("color IMG", bgrMat);
+		}
 		
 		/* === Record: === */
 		if (isRecording && frameCount == 0)
@@ -128,14 +128,13 @@ void setupInputFolder()
 	auto t = std::time(nullptr);
 	auto tm = *std::localtime(&t);
 	std::ostringstream oss; oss << std::put_time(&tm, "_%d_%m_%Y_%H_%M_%S");
-	folderName += oss.str();
+	//folderName += oss.str();
 	system((std::string("mkdir ") + folderName).c_str());
 	system((std::string("cd ") + folderName + " && mkdir depth && mkdir rgb && cd ..").c_str());
 	recordFile.open(folderName  + "/" + "associations.txt");
 
-
-	recordFile << "# RGBD recorder TUM-format (Scale = x5 millimeter = 5000 ) \n";
-	recordFile << "# Date: " << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << std::endl;
+	recordFile << "# RGBD recorder TUM-format (Scale = 1x millimeter = 1000 ) \n";
+	recordFile << "# Date: " << std::put_time(&tm, "%d-%m-%Y %H:%M:%S") << std::endl;
 }
 
 void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat)
