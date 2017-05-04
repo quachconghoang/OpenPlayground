@@ -6,47 +6,116 @@
 // Depth instr : 640 480 616.442444 616.442444 319.500000 231.408646
 
 std::string dirPath = "D:/LaneData/Sample_30-04/";
-void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
+cv::Size templateSize(32, 32);
+int count = 2100;
 
-//1. Template matching
-//2. Plane estimation
-//3. Polyline fitting
-cv::Mat tmp_left, tmp_right;
+void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
+void depthMask(const cv::Mat & depthImg, cv::Mat & mask);
+
+//1. Template matching: 3 template
+
+//2. Plane estimation: 3 regions
+
+//3. Polyline fitting: projection and fitting
+
+cv::Mat tmp_left, tmp_left_s, tmp_right, tmp_right_s;
 
 void generateTemplate()
 {
-	cv::Size templateSize(40, 40);
+	//cv::Size templateSize(32, 32);
 	tmp_left = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 	tmp_right = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
+	tmp_left_s = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
+	tmp_right_s = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 
-	cv::line(tmp_right, cv::Point(0, 0), cv::Point(40, 36), cv::Scalar(255), 8);
-	cv::line(tmp_left, cv::Point(0, 36), cv::Point(40, 0), cv::Scalar(255), 8);
 
-	cv::imshow("tmp-Left", tmp_left);
-	cv::imshow("tmp-Right", tmp_right);
-	cv::waitKey();
+	cv::line(tmp_right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 8);
+	cv::line(tmp_left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 8);
+	cv::line(tmp_right_s, cv::Point(0, 0), cv::Point(48, 32), cv::Scalar(255), 4);
+	cv::line(tmp_left_s, cv::Point(0, 32), cv::Point(48, 0), cv::Scalar(255), 4);
+
+	//cv::imshow("tmp-Left", tmp_left);
+	//cv::imshow("tmp-Right", tmp_right);
+	//cv::waitKey();
 }
 
-cv::Point templateMatching(cv::Mat &imgBin, const cv::Mat &tmp) {
+void templateProcessing(cv::Mat & imgBin, const cv::Mat &tmp, cv::Mat & matchingResult)
+{
 	int match_method = CV_TM_CCOEFF_NORMED;
-	double minVal, maxVal;
-	cv::Point minLoc, maxLoc;
-	cv::Mat result;
 	int result_cols = imgBin.cols - tmp.cols + 1;
 	int result_rows = imgBin.rows - tmp.rows + 1;
-	result.create(imgBin.rows, imgBin.cols, CV_32FC1);
-	cv::matchTemplate(imgBin, tmp, result, match_method);
-	cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
-	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+	matchingResult.create(imgBin.rows, imgBin.cols, CV_32FC1);
 
-	cv::imshow("rs", result);
-	cv::threshold(result, result, 0.8, 1, CV_THRESH_BINARY);
-	cv::imshow("rs-bin", result);
-	cv::waitKey();
+	cv::matchTemplate(imgBin, tmp, matchingResult, match_method);
+	//cv::GaussianBlur(matchingResult, matchingResult, cv::Size(5, 5), 0, 0);
 
-	maxLoc.x += tmp.cols / 2;
-	maxLoc.y += tmp.rows / 2;
+	//cv::normalize(matchingResult, matchingResult, 0, 1, cv::NORM_MINMAX, -1);
+}
+
+cv::Point getBestMatchLoc(const cv::Mat & matchingResult)
+{
+	double minVal, maxVal;
+	cv::Point minLoc, maxLoc;
+	cv::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
+	//cv::threshold(result, result, 0.8, 1, CV_THRESH_BINARY);
+	//cv::imshow("rs-bin", result);
+	//cv::waitKey();
+	maxLoc.x += templateSize.width / 2;
+	maxLoc.y += templateSize.height / 2;
 	return maxLoc;
+}
+
+void laneLineSampling(cv::Mat & img, cv::Mat & dimg) 
+{
+	cv::Point op(0, 80);
+	cv::Rect cropRect(op.x, op.y, 640, 320);
+	img = img(cropRect);
+	dimg = dimg(cropRect);
+	//cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
+	//cv::imshow("depth IMG", dimg);
+	//cv::imshow("RGB", img);
+
+	cv::Mat imgGray, imgBin;
+	cv::cvtColor(img, imgGray, cv::COLOR_RGB2GRAY);
+	cv::imshow("imgGray", imgGray);
+	cv::threshold(imgGray, imgBin, 128, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
+	cv::imshow("imgBin", imgBin);
+	//cv::waitKey();
+
+	//cv::Mat dMask = cv::Mat(dimg.rows, dimg.cols, CV_8UC1, cv::Scalar(0));
+	//depthMask(dimg, dMask);
+
+	cv::Mat result_left, result_right;
+	templateProcessing(imgBin, tmp_left, result_left);
+	templateProcessing(imgBin, tmp_right, result_right);
+	cv::Point matchLocLeft = getBestMatchLoc(result_left);
+	cv::Point matchLocRight = getBestMatchLoc(result_right);
+
+	//cv::Mat result_left_s, result_right_s;
+	templateProcessing(imgBin, tmp_left_s, result_left);
+	templateProcessing(imgBin, tmp_right_s, result_right);
+	cv::Point matchLocLeft_b = getBestMatchLoc(result_left);
+	cv::Point matchLocRight_b = getBestMatchLoc(result_right);
+
+	cv::circle(img, matchLocLeft, 4, cv::Scalar(0, 255, 0), 2);
+	cv::circle(img, matchLocRight, 4, cv::Scalar(255, 0, 0), 2);
+
+	cv::circle(img, matchLocLeft_b, 6, cv::Scalar(0, 0, 255), 2);
+	cv::circle(img, matchLocRight_b, 6, cv::Scalar(0, 255, 255), 2);
+
+	cv::rectangle(img, cv::Rect(matchLocLeft.x - 16, matchLocLeft.y - 16, 32, 32), cv::Scalar(0, 255, 0), 2);
+	cv::rectangle(img, cv::Rect(matchLocRight.x - 16, matchLocRight.y - 16, 32, 32), cv::Scalar(255, 0, 0), 2);
+
+	//cv::threshold(result_left, result_left, 0.8, 1, CV_THRESH_BINARY);
+	//cv::threshold(result_right, result_right, 0.8, 1, CV_THRESH_BINARY);
+	cv::imshow("Left", result_left);
+	cv::imshow("Right", result_right);
+
+	cv::putText(img, std::to_string(count), cv::Point(550, 280), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255),2);
+	cv::imshow("img", img);
+
+	//cv::imshow("dMask", dMask);
+	//cv::waitKey();
 }
 
 int main()
@@ -56,45 +125,15 @@ int main()
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 
-	int count = 2000;
-	//while (count < dataHeaders.size()-1)
-	//{
-	//	cv::Mat img = cv::imread(dirPath+dataHeaders[count].rgbImg);
-	//	cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
-	//	cv::imshow("depth IMG", dimg);
-	//	cv::imshow("RGB", img(cv::Rect(0,60,640,420)));
-	//	cv::waitKey(30);
-	//	count++;
-	//}
-
-	cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg);
-	cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
-	cv::imshow("depth IMG", dimg);
-	cv::imshow("RGB", img);
-
-	cv::Mat imgGray, imgBin;
-	cv::cvtColor(img, imgGray, cv::COLOR_RGB2GRAY);
-	cv::imshow("imgGray", imgGray);
-	cv::threshold(imgGray, imgBin, 128, 255, CV_THRESH_BINARY | CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
-	cv::imshow("imgBin", imgBin);
-	cv::waitKey();
-
-	cv::Mat imgBin_small;
-	cv::resize(imgBin, imgBin_small, cv::Size(320, 240));
-
-	cv::Point matchLocLeft = templateMatching(imgBin, tmp_left);
-	cv::Point matchLocRight = templateMatching(imgBin, tmp_right);
-	cv::Point matchLocMagic_Left = templateMatching(imgBin_small, tmp_left);
-	cv::Point matchLocMagic_Right = templateMatching(imgBin_small, tmp_right);
-
-	cv::circle(img, matchLocLeft, 4, cv::Scalar(0, 255, 0));
-	cv::circle(img, matchLocRight, 4, cv::Scalar(255, 0, 0));
-
-	cv::circle(img, matchLocMagic_Left * 2, 4, cv::Scalar(0, 0, 255));
-	cv::circle(img, matchLocMagic_Right * 2, 4, cv::Scalar(0, 0, 255));
-	cv::imshow("img", img);
-	cv::waitKey();
-
+	while (count < dataHeaders.size()-1)
+	{
+		cv::Mat img = cv::imread(dirPath+dataHeaders[count].rgbImg);
+		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
+		laneLineSampling(img, dimg);
+		cv::waitKey();
+		count++;
+	}
+	
 
 	/*cv::cuda::GpuMat dev_dMat(dimg);
 	cv::cuda::GpuMat dev_rgbMat(img);
@@ -111,6 +150,22 @@ int main()
 
 	/*cv::Mat depthVizMat = cv::Mat(480, 640, CV_8UC3);
 	colorizeDepthImage(dimg, depthVizMat);*/
+}
+
+void depthMask(const cv::Mat & depthImg, cv::Mat & mask)
+{
+	for (int i = 0; i < depthImg.rows; i++)
+	{
+		for (int j = 0; j < depthImg.cols; j++)
+		{
+			ushort realDepth = depthImg.at<ushort>(i, j);
+			
+			if (realDepth != 0 && realDepth < 25000)
+			{
+				mask.at<uchar>(i, j) = 128;
+			}
+		}
+	}
 }
 
 void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat)
