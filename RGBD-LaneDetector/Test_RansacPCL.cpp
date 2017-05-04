@@ -18,7 +18,10 @@
 #include <iostream>
 #include <string>
 
-std::string folderName = "D:/LaneData/Kinect_DATA/";
+
+std::string dirPath = "D:/LaneData/Sample_30-04/";
+int count = 2100;
+
 pcl::visualization::PCLVisualizer::Ptr viewer;
 
 void kinect2pointcloud()
@@ -31,9 +34,9 @@ void main()
 	viewer = UTIL::rgbVis("RANSAC - Raw", true);
 	//UTIL::
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
-	pcl::io::loadPLYFile<pcl::PointXYZRGB>(folderName + "005.ply", *cloud);
+	//pcl::io::loadPLYFile<pcl::PointXYZRGB>(kinect2_DIR_PATH + "005.ply", *cloud);
 
 	//pcl::PointCloudAOS<Host> data_host;
-	UTIL::displayColorPC(viewer, cloud);
+	//UTIL::displayColorPC(viewer, cloud);
 	viewer->spin();
 }
