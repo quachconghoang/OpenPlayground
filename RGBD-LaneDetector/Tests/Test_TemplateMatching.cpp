@@ -56,9 +56,25 @@ cv::Point getBestMatchLoc(const cv::Mat & matchingResult, double & maxVal)
 	double minVal;
 	cv::Point minLoc, maxLoc;
 	cv::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
-	maxLoc.x += templateSize.width / 2;
-	maxLoc.y += templateSize.height / 2;
 	return maxLoc;
+}
+
+void fillRegion(cv::Mat & dMat, cv::Mat & rgbMat, cv::Rect search_rect)
+{
+	for (int i = 0; i < search_rect.height; i++)
+	{
+		for (int j = 0; j < search_rect.width; j++)
+		{
+			cv::Point c_point = search_rect.tl() + cv::Point(j, i);
+			if (cv::Rect(0,0,dMat.cols,dMat.cols).contains(c_point))
+			{
+				ushort realDepth = dMat.at<ushort>(c_point);
+				if (realDepth != 0 && realDepth < 50000)	{
+					rgbMat.at<cv::Vec3b>(c_point)[2] = 255;
+				}
+			}
+		}
+	}
 }
 
 void laneLineSampling(cv::Mat & rgbimg, cv::Mat & dimg)
@@ -66,7 +82,6 @@ void laneLineSampling(cv::Mat & rgbimg, cv::Mat & dimg)
 	cv::Point op(0, 80);
 	cv::Rect cropRect(op.x, op.y, 640, 320);
 	cv::Mat img = rgbimg(cropRect);
-	dimg = dimg(cropRect);
 
 	cv::Mat imgGray, imgBin;
 	cv::cvtColor(img, imgGray, cv::COLOR_RGB2GRAY);
@@ -83,26 +98,29 @@ void laneLineSampling(cv::Mat & rgbimg, cv::Mat & dimg)
 	templateProcessing(imgBin, tmp_right, result_right);
 
 	double maxVal_Left, maxVal_Right;
-	cv::Point matchLocLeft = getBestMatchLoc(result_left, maxVal_Left);
-	cv::Point matchLocRight = getBestMatchLoc(result_right, maxVal_Right);
+	cv::Point matchLocLeft = getBestMatchLoc(result_left, maxVal_Left) + op;
+	cv::Point matchLocRight = getBestMatchLoc(result_right, maxVal_Right) + op;
+	cv::Rect tmpRect_Left = cv::Rect(matchLocLeft, cv::Size(32,32));
+	cv::Rect tmpRect_Right = cv::Rect(matchLocRight, cv::Size(32, 32));
 
-	cv::circle(img, matchLocLeft, 4, cv::Scalar(0, 255, 0), 2);
-	cv::circle(img, matchLocRight, 4, cv::Scalar(255, 0, 0), 2);
+	fillRegion(dimg, rgbimg, tmpRect_Left);
+	fillRegion(dimg, rgbimg, tmpRect_Right);
 
-	cv::rectangle(img, cv::Rect(matchLocLeft.x - 16, matchLocLeft.y - 16, 32, 32), cv::Scalar(0, 255, 0), 2);
-	cv::rectangle(img, cv::Rect(matchLocRight.x - 16, matchLocRight.y - 16, 32, 32), cv::Scalar(255, 0, 0), 2);
+	cv::rectangle(rgbimg, tmpRect_Left, cv::Scalar(0, 255, 0), 2);
+	cv::rectangle(rgbimg, tmpRect_Right, cv::Scalar(255, 0, 0), 2);
 
 	//cv::threshold(result_left, result_left, 0.8, 1, CV_THRESH_BINARY);
 	//cv::threshold(result_right, result_right, 0.8, 1, CV_THRESH_BINARY);
 	//cv::imshow("Left", result_left);
 	//cv::imshow("Right", result_right);
 
-	cv::putText(rgbimg, std::to_string(count), cv::Point(550, 380), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
-	cv::putText(rgbimg, std::to_string(maxVal_Left), matchLocLeft - cv::Point(60, -60), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 1);
-	cv::putText(rgbimg, std::to_string(maxVal_Right), matchLocRight - cv::Point(60, -60), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 0, 0), 1);
+	cv::putText(rgbimg, std::to_string(count), cv::Point(500, 420), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+	cv::putText(rgbimg, std::to_string(maxVal_Left), matchLocLeft - cv::Point(20, 5), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 1);
+	cv::putText(rgbimg, std::to_string(maxVal_Right), matchLocRight - cv::Point(20, 5), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 0, 0), 1);
 
+	cv::imshow("dimg", dimg);
 	cv::imshow("img", rgbimg);
-
+	
 	//cv::imshow("dMask", dMask);
 	//cv::waitKey();
 }
@@ -123,22 +141,6 @@ int main()
 		count++;
 	}
 
-
-	/*cv::cuda::GpuMat dev_dMat(dimg);
-	cv::cuda::GpuMat dev_rgbMat(img);
-
-	cv::cuda::GpuMat dev_xyzMap(dimg.rows, dimg.cols, CV_32FC3);
-	cv::cuda::GpuMat dev_normalMap(dimg.rows, dimg.cols, CV_32FC3);
-	cv::cuda::GpuMat dev_objectMap(dimg.rows, dimg.cols, CV_8UC1);
-	ImgProc3D::convertTo_Point3fMap(dev_dMat, m_camInfo, dev_xyzMap);
-	ImgProc3D::convertTo_NormalsMap(dev_xyzMap, dev_normalMap);
-
-	cv::Mat xyzMap, laneMap2D, normalMap, objMap;
-	dev_normalMap.download(normalMap);
-	dev_xyzMap.download(xyzMap);*/
-
-	/*cv::Mat depthVizMat = cv::Mat(480, 640, CV_8UC3);
-	colorizeDepthImage(dimg, depthVizMat);*/
 }
 
 void depthMask(const cv::Mat & depthImg, cv::Mat & mask)

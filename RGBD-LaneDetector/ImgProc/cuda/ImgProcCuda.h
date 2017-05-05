@@ -6,9 +6,9 @@
 #include <opencv2/core/cuda.hpp>
 #include "../types.h"
 
-//2D Map 512x512 - 1 pixels = 5mm
+//2D Map 512x512 - 1 pixels = 2cm
 #define LANE_MAP_SIZE 512
-#define LANE_MAP_SCALE 200
+#define LANE_MAP_SCALE 50
 #define OBJ_DISTANCE_THRESHOLD 1.5f
 
 namespace ImgProc3D

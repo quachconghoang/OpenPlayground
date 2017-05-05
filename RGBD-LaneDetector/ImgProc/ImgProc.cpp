@@ -134,10 +134,10 @@ void fillLaneMap2D(cv::Mat & xyzMat, cv::Mat & lane2D, cv::Vec4f planeModel, flo
 				}
 			}
 			/*	NEAR RANGE INTERPOLATION	*/
-			/*else{
-				if (i > 240){
-					const float fx = 570.342165925f;
-					const float fy = 570.341946943f;
+			else{
+				if (i > 120){
+					const float fx = 616.442444f;
+					const float fy = 616.442444f;
 					const float cx = 319.5f;
 					const float cy = 239.5f;
 					cv::Point3f rayLine = cv::normalize(cv::Vec3f((j - cx) / fx, (i - cy) / fy, 1));
@@ -149,15 +149,15 @@ void fillLaneMap2D(cv::Mat & xyzMat, cv::Mat & lane2D, cv::Vec4f planeModel, flo
 					float p_y_new = p_t.dot(e_2);
 					lane2D.at<cv::Point2f>(i, j) = cv::Point2f(p_x_new, p_y_new);
 				}
-			}*/
+			}
 		}
 	}
 }
 
 void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap)
 {
-	// 1 pixel = 5mm
-	float scale = 1/0.005;
+	// 1 pixel = 2cm
+	float scale = 1/0.02;
 	int width = gridMap.cols;
 	int height = gridMap.rows;
 	cv::Rect mapRect(0, 0, width, height);
@@ -179,6 +179,7 @@ void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap)
 		}
 	}
 }
+
 void line_equation(cv::Point p1, cv::Point p2, cv::Point3f& equa) {
     equa.x = p2.y - p1.y;
     equa.y = p1.x - p2.x;

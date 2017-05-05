@@ -29,7 +29,13 @@ namespace ImgProc3D
 		float cy = 239.5f;
 		float scale = 1000.f;
 
-		Intr(float _scale){ scale = _scale; };
+		Intr()
+		{
+			fx = 616.442444f;	fy = 616.442444f;
+			cx = 319.5f;		cy = 231.408646f;
+			scale = 1000.f;
+		}
+
 		Intr(float _fx, float _fy, float _cx, float _cy, float _scale){
 			fx = _fx;	fy = _fy;
 			cx = _cx;	cy = _cy;
