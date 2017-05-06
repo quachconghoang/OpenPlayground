@@ -29,8 +29,6 @@ namespace ImgProc3D
 		cv::Mat tmp_left, tmp_right;
 		void generateTemplate();
 
-		
-
 		cv::cuda::GpuMat dev_dMat, dev_rgbMat, dev_xyzMap, dev_laneMap2D;
 		void fillLaneMap();
 		void detectLaneCenter();
