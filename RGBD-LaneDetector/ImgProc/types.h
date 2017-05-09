@@ -17,7 +17,8 @@ namespace ImgProc3D
 		IntrMode_640x480_RAW,
 		IntrMode_320x240_RAW,
 		IntrMode_Realsense_RAW,
-		IntrMode_Kinect2_RAW
+		IntrMode_Kinect2_RAW,
+		IntrMode_Synthia_RGBD
 	};
 
     struct Intr
@@ -68,6 +69,13 @@ namespace ImgProc3D
 				break;
 
 			case ImgProc3D::IntrMode_Kinect2_RAW:
+				break;
+
+			case ImgProc3D::IntrMode_Synthia_RGBD:
+				fx = 532.7403520000000f;
+				fy = 532.7403520000000f;
+				cx = 640;	cy = 231.408646f;
+				scale = 100.f;
 				break;
 
 			default:

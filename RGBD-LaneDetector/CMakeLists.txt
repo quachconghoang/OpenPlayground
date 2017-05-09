@@ -44,7 +44,10 @@ endif()
 
 set(Build_Tests false CACHE BOOL "Build pcl processing")
 if(Build_Tests)
-	ADD_SUBDIRECTORY(./Tests)
-	#add_executable( Test_PCL Test_PCL.cpp ${Utils_src})
-	#target_link_libraries( Test_PCL ${OpenCV_LIBS} ${PCL_LIBRARIES})
+	# include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../")
+	add_executable( Test_TemplateMatching Test_TemplateMatching.cpp)
+	target_link_libraries( Test_TemplateMatching ${OpenCV_LIBS} libImgProcCUDA)
+	add_executable( Test_Matching_Synth Test_Matching_Synth.cpp)
+	target_link_libraries( Test_Matching_Synth ${OpenCV_LIBS} libImgProcCUDA)
 endif()
+
