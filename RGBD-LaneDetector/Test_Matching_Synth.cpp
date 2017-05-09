@@ -3,10 +3,10 @@
 #include "ImgProc/cuda/ImgProcCuda.h"
 #include "ImgProc/DataIO.h"
 
-std::string dirPath = "G:/SYNTHIA/SynthDataLane/SEQS-01-SUMMER/";
+std::string dirPath = "C:/Users/HoangQC-Workstation/Desktop/SynthDataLane/SEQS-01-SUMMER/";
 int main()
 {
-
+	
 }
 
 void createHeaderFile()

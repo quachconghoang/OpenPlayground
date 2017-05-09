@@ -74,7 +74,7 @@ namespace ImgProc3D
 			case ImgProc3D::IntrMode_Synthia_RGBD:
 				fx = 532.7403520000000f;
 				fy = 532.7403520000000f;
-				cx = 640;	cy = 231.408646f;
+				cx = 640;	cy = 380;
 				scale = 100.f;
 				break;
 

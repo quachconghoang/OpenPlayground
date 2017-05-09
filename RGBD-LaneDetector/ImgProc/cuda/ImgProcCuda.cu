@@ -61,7 +61,7 @@ __global__ void kernel_convert_Depth_To_Point3f(cv::cuda::PtrStep<ushort> _depth
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	float d = float(_depth(y,x)) / cam.scale;
-	if (d == 0)
+	if (d == 0 || d > 50)
 		_point3f(y, x) = { CUDART_NAN_F, CUDART_NAN_F, CUDART_NAN_F };
 	else
 		_point3f(y, x) = { (x - cam.cx) * d / cam.fx, (y - cam.cy) * d / cam.fy, d };
@@ -144,7 +144,7 @@ __global__ void kernel_GenGridMap2D(cv::cuda::PtrStep<float3> _point3f, cv::cuda
 void ImgProc3D::convertTo_Point3fMap(cv::cuda::GpuMat & depth, const ImgProc3D::Intr camInfo, cv::cuda::GpuMat & xyzMat)
 {
 	cv::Size sz = depth.size();
-	dim3 block(32, 16);
+	dim3 block(64, 8);
 	dim3 grid(divUp(sz.width, block.x), divUp(sz.height, block.y));
 	kernel_convert_Depth_To_Point3f << <grid, block >> >(depth, camInfo, xyzMat);
 }
@@ -152,7 +152,7 @@ void ImgProc3D::convertTo_Point3fMap(cv::cuda::GpuMat & depth, const ImgProc3D::
 void ImgProc3D::convertTo_NormalsMap(cv::cuda::GpuMat & xyzMat, cv::cuda::GpuMat & normalMap)
 {
 	cv::Size sz = xyzMat.size();
-	dim3 block(32, 16);
+	dim3 block(8, 8);
 	dim3 grid(divUp(sz.width, block.x), divUp(sz.height, block.y));
 	kernel_convert_XYZ_To_Normals << <grid, block >> >(sz.height, sz.width, xyzMat, normalMap);
 }
