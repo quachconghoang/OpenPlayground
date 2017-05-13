@@ -14,7 +14,7 @@ void depthMask(const cv::Mat & depthImg, cv::Mat & mask);
 
 int main()
 {
-	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD);
+	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 
@@ -29,6 +29,9 @@ int main()
 	{
 		cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg);
 		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
+
+		cv::resize(img, img, cv::Size(640, 380));
+		cv::resize(dimg, dimg, cv::Size(640, 380));
 
 		cv::cuda::GpuMat dev_dMat(dimg);
 		cv::cuda::GpuMat dev_rgbMat(img);

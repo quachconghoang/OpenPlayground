@@ -18,7 +18,8 @@ namespace ImgProc3D
 		IntrMode_320x240_RAW,
 		IntrMode_Realsense_RAW,
 		IntrMode_Kinect2_RAW,
-		IntrMode_Synthia_RGBD
+		IntrMode_Synthia_RGBD,
+		IntrMode_Synthia_RGBD_HALF
 	};
 
     struct Intr
@@ -75,6 +76,13 @@ namespace ImgProc3D
 				fx = 532.7403520000000f;
 				fy = 532.7403520000000f;
 				cx = 640;	cy = 380;
+				scale = 100.f;
+				break;
+
+			case ImgProc3D::IntrMode_Synthia_RGBD_HALF:
+				fx = 266.370176f;
+				fy = 266.370176f;
+				cx = 320;	cy = 190;
 				scale = 100.f;
 				break;
 
