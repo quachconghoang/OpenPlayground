@@ -4,7 +4,7 @@
 #include "ImgProc/DataIO.h"
 
 std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
-int count = 0;
+int count = 150;
 cv::Size templateSize(32, 32);
 
 cv::Mat tmp_left, tmp_right, tmp_right_def;
@@ -21,8 +21,8 @@ void generateTemplate()
 	tmp_right_def = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 	cv::line(tmp_right_def, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 8);
 
-	cv::line(tmp_right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 8);
-	cv::line(tmp_left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 8);
+	cv::line(tmp_right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
+	cv::line(tmp_left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
 	cv::line(tmp_right_s, cv::Point(0, 0), cv::Point(48, 32), cv::Scalar(255), 4);
 	cv::line(tmp_left_s, cv::Point(0, 32), cv::Point(48, 0), cv::Scalar(255), 4);
 
@@ -41,7 +41,7 @@ void templateProcessing(cv::Mat & imgBin, const cv::Mat &tmp, cv::Mat & matching
 
 	//cv::GaussianBlur(matchingResult, matchingResult, cv::Size(5, 5), 0, 0);
 	cv::normalize(matchingResult, matchingResult, 0, 1, cv::NORM_MINMAX, -1);
-	cv::threshold(matchingResult, matchingResult, 0.95, 1, CV_THRESH_BINARY);
+	cv::threshold(matchingResult, matchingResult, 0.9, 1, CV_THRESH_BINARY);
 	cv::imshow(id, matchingResult);
 }
 
@@ -56,18 +56,36 @@ int main()
 	{
 		cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg);
 		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
-		cv::imshow("dimg", dimg);
-		cv::imshow("img", img);
-
+		cv::resize(img, img, cv::Size(640, 380), 0, 0, cv::INTER_NEAREST);
+		cv::resize(dimg, dimg, cv::Size(640, 380), 0, 0, cv::INTER_NEAREST);
 
 		cv::Mat imgGray, imgBin;
 		cv::cvtColor(img, imgGray, cv::COLOR_RGB2GRAY);
 		cv::imshow("imgGray", imgGray);
-		cv::threshold(imgGray, imgBin, 150, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
+		cv::threshold(imgGray, imgBin, 128, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
 		cv::imshow("imgBin", imgBin);
 
 		cv::Mat result_left, result_right, result_right_enhance;
 		templateProcessing(imgBin, tmp_right, result_right, "RS_R");
+		templateProcessing(imgBin, tmp_left, result_left, "RS_L");
+
+		for (int i = 0; i < result_left.rows; i++)
+		{
+			for (int j = 0; j < result_left.cols; j++)
+			{
+				if (result_left.at<float>(i, j) == 1 && dimg.at<ushort>(16+i,16+j) < 2000)
+				{
+					img.at<cv::Vec3b>(16 + i, 16 + j) = cv::Vec3b(0,0,255);
+				}
+				if (result_right.at<float>(i, j) == 1 && dimg.at<ushort>(16 + i, 16 + j) < 2000)
+				{
+					img.at<cv::Vec3b>(16 + i, 16 + j) = cv::Vec3b(255, 0, 0);
+				}
+			}
+		}
+
+		cv::imshow("dimg", dimg);
+		cv::imshow("img", img);
 
 		cv::waitKey(10);
 		count++;

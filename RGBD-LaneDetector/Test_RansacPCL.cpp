@@ -25,10 +25,10 @@
 #include "ImgProc/LaneDetector.h"
 #include "ImgProc/DataIO.h"
 
-std::string dirPath = "D:/LaneData/Sample_30-04/";
-int count = 2100;
-#define IMGWIDTH 640
-#define	IMGHEIGHT 480
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+int count = 150;
+#define RAW_IMG_WIDTH 1280
+#define	RAW_IMG_HEIGHT 760
 
 pcl::visualization::PCLVisualizer::Ptr viewer;
 cv::Vec4f planeModel;
@@ -60,33 +60,23 @@ cv::Vec4f processModel(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 
 void main()
 {
-	ImgProc3D::LaneDetector laneDetector(640,480);
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
-	viewer = UTIL::rgbVis("RANSAC - Raw", true);
+	//viewer = UTIL::rgbVis("RANSAC - Raw", true);
+	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
 
 	while (count < dataHeaders.size() - 1)
 	{
 		cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg);
 		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
-		laneDetector.processFrame(img, dimg);
-		
+		cv::resize(img, img, cv::Size(RAW_IMG_WIDTH / 2, RAW_IMG_HEIGHT/2));
+		cv::resize(dimg, dimg, cv::Size(RAW_IMG_WIDTH / 2, RAW_IMG_HEIGHT / 2));
 
-		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud <pcl::PointXYZ>);
-		for (int i = 0; i < laneDetector.samplePoints.size();i++)
-		{
-			cloud->push_back(pcl::PointXYZ(laneDetector.samplePoints[i].x, laneDetector.samplePoints[i].y, laneDetector.samplePoints[i].z));
-		}
-		//std::cout << *cloud;
-		viewer->removeAllPointClouds();
-		viewer->removeAllShapes();
-		UTIL::displayPC(viewer,cloud,1,0,0);
-		viewer->spinOnce();
 
-		planeModel = processModel(cloud);
-		laneDetector.genarateMap2D(planeModel);
+		pcl::cuda::PointCloudAOS<pcl::cuda::Host> data;
+		pcl::cuda::PointCloudAOS<pcl::cuda::Device> dev_data;
 
-		cv::putText(img, std::to_string(count), cv::Point(500, 420), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+
 		cv::imshow("RGB", img);
 		cv::imshow("D", dimg);
 		cv::waitKey();
