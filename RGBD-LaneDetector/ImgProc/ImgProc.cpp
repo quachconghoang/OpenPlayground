@@ -22,7 +22,7 @@ cv::Rect createSafeRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedR
 
 cv::Vec2f getAnglePCA(cv::Mat & tmpRS)
 {
-	cv::normalize(tmpRS, tmpRS, 0, 1, cv::NORM_MINMAX, -1);
+	//cv::normalize(tmpRS, tmpRS, 0, 1, cv::NORM_MINMAX, -1);
 	std::vector<cv::Point2d> pcaData;
 	for (int i = 0; i < tmpRS.rows; i++)
 	{
@@ -59,6 +59,73 @@ cv::Vec2f getAnglePCA(cv::Mat & tmpRS)
 		eigen_vecs[0].y *= (-1);
 	}
 	return cv::Vec2f(eigen_vecs[0].x, eigen_vecs[0].y);
+}
+
+int countNonZeroCenter(cv::Mat & _map, cv::Point & center)
+{
+	center = cv::Point(0, 0);
+	//cv::imshow("MapTMP", _map);
+	//cv::waitKey();
+	int count = 0;
+	for (int i = 0; i < _map.rows; i++){
+		for (int j = 0; j < _map.cols; j++){
+			if (_map.at<float>(i, j) > 0.1){
+				count++;
+				center += cv::Point(j, i);
+			}
+		}
+	}
+	if (count != 0){
+		center /= count;
+	}
+	return count;
+}
+
+void getLinePoints_SlindingBox_(cv::Mat & tmpResult, 
+	std::vector<cv::Point> & listPoints, 
+	cv::Point initPoint, cv::Vec2f pca_rs, 
+	cv::Size boxSize /* = cv::Size(32,32) */, float jumpStep /* = 32 */)
+{
+	//cv::normalize(tmpResult, tmpResult, 0, 1, cv::NORM_MINMAX, -1);
+	cv::threshold(tmpResult, tmpResult, 0.8, 1, CV_THRESH_BINARY);
+
+	cv::Rect rsRect = cv::Rect(0, 0, tmpResult.cols, tmpResult.rows);
+	cv::Point jumpDistance(jumpStep * fabs(pca_rs[0]), jumpStep * fabs(pca_rs[1]));
+
+	//Go Down --||--
+	cv::Point boxTL = initPoint;
+	cv::Point boxBR = initPoint + cv::Point(jumpStep, jumpStep);
+	while (rsRect.contains(boxBR) && rsRect.contains(boxTL))
+	{
+		cv::Rect newBox(boxTL, boxBR);
+		cv::Point tmpCenter;
+		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
+		if (nonZero < 20) { break; }
+		else{
+			listPoints.push_back(tmpCenter + boxTL);
+			boxTL += tmpCenter;
+			boxBR = boxTL + jumpDistance;
+		}
+	}
+	std::reverse(listPoints.begin(), listPoints.end());
+
+	//Go Up --||--
+	boxTL = initPoint - jumpDistance;
+	boxBR = initPoint;
+	while (rsRect.contains(boxBR) && rsRect.contains(boxTL))
+	{
+		cv::Rect newBox(boxTL, boxBR);
+		cv::Point tmpCenter;
+		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
+		if (nonZero < 20){
+			break;
+		}
+		else{
+			listPoints.push_back(tmpCenter + boxTL);
+			boxTL -= tmpCenter;
+			boxBR = boxTL + jumpDistance;
+		}
+	}
 }
 
 cv::Point2i getRandomSample(const cv::Mat & depthMat, const cv::Point2i & origin, cv::RNG & rng, const cv::Point2i delta)

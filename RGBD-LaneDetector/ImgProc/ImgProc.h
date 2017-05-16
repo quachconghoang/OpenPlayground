@@ -19,6 +19,11 @@ cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInf
 //Template matching utilities
 cv::Rect createSafeRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedRectSize);
 cv::Vec2f getAnglePCA(cv::Mat & tmpRS);
+void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
+	std::vector<cv::Point> & listPoints, 
+	cv::Point initPoint, cv::Vec2f pca_rs,
+	cv::Size boxSize = cv::Size(32,32), 
+	float jumpStep = 32);
 
 //HUNG CODE:
 void line_equation(cv::Point p1, cv::Point p2, cv::Point3f& equa);

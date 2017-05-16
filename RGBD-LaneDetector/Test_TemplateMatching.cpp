@@ -139,7 +139,7 @@ void getLinePoints_SlindingBox(cv::Mat & tmpResult, std::vector<cv::Point> & lis
 	cv::Size boxSize /* = cv::Size(32,32) */, float jumpStep /* = 32 */)
 {
 	cv::normalize(tmpResult, tmpResult, 0, 1, cv::NORM_MINMAX, -1);
-	cv::threshold(tmpResult, tmpResult, 0.2, 1, CV_THRESH_BINARY);
+	cv::threshold(tmpResult, tmpResult, 0.5, 1, CV_THRESH_BINARY);
 
 	cv::Rect rsRect = cv::Rect(0, 0, tmpResult.cols, tmpResult.rows);
 	cv::Point jumpDistance(jumpStep * fabs(pca_rs[0]), jumpStep * fabs(pca_rs[1]));
