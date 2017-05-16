@@ -16,6 +16,10 @@ void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap);
 
 cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Point2i p);
 
+//Template matching utilities
+cv::Rect createSafeRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedRectSize);
+cv::Vec2f getAnglePCA(cv::Mat & tmpRS);
+
 //HUNG CODE:
 void line_equation(cv::Point p1, cv::Point p2, cv::Point3f& equa);
 float cal_gradient(cv::Point3f p);

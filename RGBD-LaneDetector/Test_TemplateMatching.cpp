@@ -12,7 +12,6 @@ int jumpStep = 30;
 
 void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
 void depthMask(const cv::Mat & depthImg, cv::Mat & mask);
-cv::Rect safeCreateRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedSize);
 cv::Vec2f pcaAnalyzing(cv::Mat & tmpRS);
 void getLinePoints_SlindingBox(cv::Mat & tmpResult, std::vector<cv::Point> & listPoints, cv::Vec2f pca_rs,
 	cv::Point initPoint, cv::Size boxSize = cv::Size(32,32), float jumpStep = 32);
@@ -67,7 +66,7 @@ cv::Point getBestMatchLoc(const cv::Mat & matchingResult, double & maxVal, cv::V
 	cv::Point minLoc, maxLoc;
 	cv::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
 
-	cv::Rect safeRect = safeCreateRect(maxLoc - cv::Point(16, 16), matchingResult.size(), templateSize);
+	cv::Rect safeRect = createSafeRect(maxLoc - cv::Point(16, 16), matchingResult.size(), templateSize);
 	cv::Mat tmp = matchingResult(safeRect);
 	//cv::normalize(tmp, tmp, 0, 1, cv::NORM_MINMAX, -1);
 	//cv::threshold(tmp, tmp, 0.7, 1, CV_THRESH_BINARY);
@@ -238,7 +237,7 @@ void laneLineSampling(cv::Mat & rgbimg, cv::Mat & dimg)
 			imgGray.at<uchar>(center_tmp - cv::Point(-2, 0)) +
 			imgGray.at<uchar>(center_tmp - cv::Point(0, -2));
 		preferedThresh = color / 5-10*/;
-		cv::Mat curr_gray = imgGray(safeCreateRect(matchLocRight + cv::Point(16, 16), cv::Size(imgGray.cols, imgGray.rows), cv::Size(32, 32)));
+		cv::Mat curr_gray = imgGray(createSafeRect(matchLocRight + cv::Point(16, 16), cv::Size(imgGray.cols, imgGray.rows), cv::Size(32, 32)));
 		cv::imshow("Gray", curr_gray);
 	}
 	else
@@ -353,21 +352,4 @@ void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat)
 			}
 		}
 	}
-}
-
-cv::Rect safeCreateRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedSize)
-{
-	int safeWidth = preferedSize.width;
-	int safeHeight = preferedSize.height;
-
-	if (tl_point.x < 0) tl_point.x = 0;
-	if (tl_point.y < 0) tl_point.y = 0;
-
-	if (safeWidth + tl_point.x > imgSize.width)
-		safeWidth = imgSize.width - tl_point.x;
-	if (safeHeight + tl_point.y > imgSize.height)
-		safeHeight = imgSize.height - tl_point.y;
-
-
-	return cv::Rect(tl_point, cv::Size(safeWidth, safeHeight));
 }

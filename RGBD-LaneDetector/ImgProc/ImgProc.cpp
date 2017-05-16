@@ -8,6 +8,59 @@
 
 #define INVALID_CVPOINT2i cv::Point2i(-1, -1)
 
+cv::Rect createSafeRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedRectSize)
+{
+	int safeWidth = preferedRectSize.width;
+	int safeHeight = preferedRectSize.height;
+	if (tl_point.x < 0) tl_point.x = 0;
+	if (tl_point.y < 0) tl_point.y = 0;
+
+	if (safeWidth + tl_point.x > imgSize.width)		safeWidth = imgSize.width - tl_point.x;
+	if (safeHeight + tl_point.y > imgSize.height)	safeHeight = imgSize.height - tl_point.y;
+	return cv::Rect(tl_point, cv::Size(safeWidth, safeHeight));
+}
+
+cv::Vec2f getAnglePCA(cv::Mat & tmpRS)
+{
+	cv::normalize(tmpRS, tmpRS, 0, 1, cv::NORM_MINMAX, -1);
+	std::vector<cv::Point2d> pcaData;
+	for (int i = 0; i < tmpRS.rows; i++)
+	{
+		for (int j = 0; j < tmpRS.cols; j++)
+		{
+			if (tmpRS.at<float>(i, j) > 0.8f)
+			{
+				pcaData.push_back(cv::Point2d(j, i));
+			}
+		}
+	}
+
+	cv::Mat data_pts = cv::Mat(pcaData.size(), 2, CV_64FC1, &pcaData[0]);
+	//std::cout << data_pts;
+
+	//Perform PCA analysis
+	cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+	//Store the center of the object
+	cv::Point cntr = cv::Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
+		static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+	//Store the eigenvalues and eigenvectors
+	std::vector<cv::Point2d> eigen_vecs(2);
+	std::vector<double> eigen_val(2);
+	for (int i = 0; i < 2; ++i)
+	{
+		eigen_vecs[i] = cv::Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
+			pca_analysis.eigenvectors.at<double>(i, 1));
+		eigen_val[i] = pca_analysis.eigenvalues.at<double>(i, 0);
+	}
+	//std::cout << eigen_vecs << " \n " << eigen_val[0] << "-" << eigen_val[1] <<"\n == \n";
+	if (eigen_vecs[0].y<0)
+	{
+		eigen_vecs[0].x *= (-1);
+		eigen_vecs[0].y *= (-1);
+	}
+	return cv::Vec2f(eigen_vecs[0].x, eigen_vecs[0].y);
+}
+
 cv::Point2i getRandomSample(const cv::Mat & depthMat, const cv::Point2i & origin, cv::RNG & rng, const cv::Point2i delta)
 {
 	cv::Point2i ranPoint;
