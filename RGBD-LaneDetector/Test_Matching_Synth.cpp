@@ -3,7 +3,7 @@
 #include "ImgProc/cuda/ImgProcCuda.h"
 #include "ImgProc/DataIO.h"
 
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
 int count = 150;
 
 cv::Size templateSize(32, 32);

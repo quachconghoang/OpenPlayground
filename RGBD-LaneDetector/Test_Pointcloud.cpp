@@ -3,18 +3,23 @@
 #include "ImgProc/cuda/ImgProcCuda.h"
 #include "ImgProc/DataIO.h"
 
+#include "opencv2/rgbd.hpp"
+
 // Depth instr : 640 480 616.442444 616.442444 319.500000 231.408646
 
 std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
-int count = 0;
+//std::string dirPath = "D:/LaneData/Sample_30-04/";
+int count = 100;
 
 void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
 void depthMask(const cv::Mat & depthImg, cv::Mat & mask);
 
+#define IMG_WIDTH 640
+#define IMG_HEIGHT 380
 
 int main()
 {
-	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
+	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Realsense_RAW);
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 
@@ -25,30 +30,41 @@ int main()
 	cv::Affine3f cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
 	viz.setViewerPose(cam_pose);
 
+	cv::Mat cameraMatrix = (cv::Mat_<float>(3, 3) << m_camInfo.fx, 0, m_camInfo.cx, 0, m_camInfo.fy, m_camInfo.cy, 0, 0, 1);
+	cv::rgbd::RgbdNormals n_estimate(IMG_HEIGHT, IMG_WIDTH, CV_32F, cameraMatrix, 5, cv::rgbd::RgbdNormals::RGBD_NORMALS_METHOD_SRI);
+	//cameraMatrix<float> << ;
+	//cameraMatrix.at<float>(0, 0) = 0;
+
 	while (count < dataHeaders.size()-1)
 	{
 		cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg);
 		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
 
-		cv::resize(img, img, cv::Size(640, 380));
-		cv::resize(dimg, dimg, cv::Size(640, 380));
+		cv::resize(img, img, cv::Size(IMG_WIDTH, IMG_HEIGHT));
+		cv::resize(dimg, dimg, cv::Size(IMG_WIDTH, IMG_HEIGHT));
 
 		cv::cuda::GpuMat dev_dMat(dimg);
 		cv::cuda::GpuMat dev_rgbMat(img);
 
 		cv::cuda::GpuMat dev_xyzMap(dimg.rows, dimg.cols, CV_32FC3);
-		cv::cuda::GpuMat dev_normalMap(dimg.rows, dimg.cols, CV_32FC3);
+		//cv::cuda::GpuMat dev_normalMap(dimg.rows, dimg.cols, CV_32FC3);
 		//cv::cuda::GpuMat dev_objectMap(dimg.rows, dimg.cols, CV_8UC1);
 		ImgProc3D::convertTo_Point3fMap(dev_dMat, m_camInfo, dev_xyzMap);
-		ImgProc3D::convertTo_NormalsMap(dev_xyzMap, dev_normalMap);
+		//ImgProc3D::convertTo_NormalsMap(dev_xyzMap, dev_normalMap);
+		//dev_normalMap.download(normalMap);
 
 		cv::Mat xyzMap, laneMap2D, normalMap, objMap;
-		dev_normalMap.download(normalMap);
+		
 		dev_xyzMap.download(xyzMap);
 
-		//viz.showWidget("w", cv::viz::WCloud(xyzMap, img)/*, cvaff*/);
-		//viz.spinOnce(1, true);
+		n_estimate(xyzMap, normalMap);
+		//cv::rgbd::depthTo3d(dimg * 10, cameraMatrix, xyzMap);
+		
 
+		viz.showWidget("w", cv::viz::WCloud(xyzMap, img, normalMap)/*, cvaff*/);
+		viz.spinOnce(1, true);
+
+		
 		//cv::putText(img, std::to_string(count), cv::Point(550, 400), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 		cv::imshow("normal", normalMap);
 		cv::imshow("RGB", img);
@@ -56,7 +72,7 @@ int main()
 		/*cv::Mat depthVizMat = cv::Mat(480, 640, CV_8UC3);
 		colorizeDepthImage(dimg, depthVizMat);*/
 
-		cv::waitKey(30);
+		cv::waitKey();
 		count++;
 	}
 	

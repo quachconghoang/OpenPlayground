@@ -111,29 +111,6 @@ cv::Vec2f pcaAnalyzing(cv::Mat & tmpRS)
 	return cv::Vec2f(eigen_vecs[0].x,eigen_vecs[0].y);
 }
 
-int countNonZeroCenter(cv::Mat & _map, cv::Point & center)
-{
-	center = cv::Point(0, 0);
-	//cv::imshow("MapTMP", _map);
-	//cv::waitKey();
-	int count = 0;
-	for (int i = 0; i < _map.rows; i++)
-	{
-		for (int j = 0; j < _map.cols; j++)
-		{
-			if (_map.at<float>(i,j) > 0.1)
-			{
-				count++;
-				center += cv::Point(j, i);
-			}
-		}
-	}
-	if (count!=0)
-	{
-		center /= count;
-	}
-	return count;
-}
 
 void getLinePoints_SlindingBox(cv::Mat & tmpResult, std::vector<cv::Point> & listPoints, cv::Point initPoint, cv::Vec2f pca_rs,
 	cv::Size boxSize /* = cv::Size(32,32) */, float jumpStep /* = 32 */)
