@@ -92,6 +92,8 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	cv::Rect rsRect = cv::Rect(0, 0, tmpResult.cols, tmpResult.rows);
 	cv::Point jumpDistance(jumpStep * fabs(pca_rs[0]), jumpStep * fabs(pca_rs[1]));
 
+	listPoints.push_back(initPoint);
+
 	//Go Down --||--
 	cv::Point boxTL = initPoint;
 	cv::Point boxBR = initPoint + cv::Point(jumpStep, jumpStep);
@@ -298,4 +300,20 @@ void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap)
 			}
 		}
 	}
+}
+
+cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxVal)
+{
+	double minVal;
+	cv::Point minLoc, maxLoc;
+	cv::cuda::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
+	return maxLoc;
+}
+
+cv::Point cpu_findMinmax(const cv::Mat & matchingResult, double & maxVal)
+{
+	double minVal;
+	cv::Point minLoc, maxLoc;
+	cv::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
+	return maxLoc;
 }

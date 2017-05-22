@@ -19,7 +19,7 @@ void depthMask(const cv::Mat & depthImg, cv::Mat & mask);
 
 int main()
 {
-	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Realsense_RAW);
+	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD);
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 

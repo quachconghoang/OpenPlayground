@@ -3,16 +3,26 @@
 #include "ImgProc/cuda/ImgProcCuda.h"
 #include "ImgProc/DataIO.h"
 
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
-int count = 150;
-
 cv::Size templateSize(32, 32);
 cv::Point templateCenter(16, 16);
-cv::Size fullImg_Size(1280, 760);
-cv::Size processImg_Size(640, 380);
 
-cv::Rect laneRegion(0, 180, 640, 200);
-cv::Point orgTemplate(0 + 16,180 + 16);
+//std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
+//int count = 100;
+//bool needResize = true;
+//cv::Point templateCenter(16, 16);
+//cv::Size fullImg_Size(1280, 760);
+//cv::Size processImg_Size(640, 380);
+//cv::Rect laneRegion(0, 180, 640, 200);
+//cv::Point orgTemplate(0 + 16,180 + 16);
+
+std::string dirPath = "D:/LaneData/Sample_30-04/";
+int count = 2000;
+bool needResize = false;
+cv::Size fullImg_Size(640, 480);
+cv::Size processImg_Size(640, 480);
+cv::Rect laneRegion(0, 100, 640, 380);
+cv::Point orgTemplate(0 + 16, 100 + 16);
+
 
 cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
 cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
@@ -21,8 +31,9 @@ cv::Size matchingResult_Size(laneRegion.width - templateSize.width + 1,
 	laneRegion.height - templateSize.height + 1);
 
 cv::Mat tmp_left, tmp_right, tmp_center;
-cv::Ptr<cv::cuda::TemplateMatching> matchingAlg;
 
+
+cv::Ptr<cv::cuda::TemplateMatching> matchingAlg;
 cv::cuda::GpuMat dev_temp_left, dev_temp_right;
 cv::cuda::GpuMat dev_result_left, dev_result_right;
 cv::cuda::GpuMat dev_result_normalized_left, dev_result_normalized_right;
@@ -61,16 +72,6 @@ void generateTemplate()
 	//cv::imshow("tmp-Center", tmp_center);
 	//cv::waitKey();
 }
-
-cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxVal)
-{
-	double minVal;
-	cv::Point minLoc, maxLoc;
-	cv::cuda::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
-	return maxLoc;
-}
-
-#define INVALID_CVPOINT2i cv::Point2i(-1, -1)
 
 cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius, cv::RNG & rng)
 {
@@ -138,7 +139,7 @@ int main()
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 
-	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
+	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Realsense_RAW);
 
 	//ImgProc3D::convertTo_Point3fMap(dev_dMat, m_camInfo, dev_xyzMap);
 	/*dev_xyzMap.download(xyzMap);*/
@@ -147,8 +148,8 @@ int main()
 		cv::Mat img = cv::imread(dirPath + dataHeaders[count].rgbImg/*"../Data/58-rgb.png"*/);
 		cv::Mat dimg = cv::imread(dirPath + dataHeaders[count].depthImg, CV_LOAD_IMAGE_ANYDEPTH);
 
-		cv::resize(img, img, processImg_Size, 0, 0, cv::INTER_NEAREST);
-		cv::resize(dimg, dimg, processImg_Size, 0, 0, cv::INTER_NEAREST);
+		//cv::resize(img, img, processImg_Size, 0, 0, cv::INTER_NEAREST);
+		//cv::resize(dimg, dimg, processImg_Size, 0, 0, cv::INTER_NEAREST);
 
 		dev_dMat.upload(dimg);
 		ImgProc3D::convertTo_Point3fMap(dev_dMat, m_camInfo, dev_xyzMap);
@@ -198,11 +199,12 @@ int main()
 			right_Orient = getAnglePCA(rs_Right(right_InitRect));
 		}
 
+		cv::imshow("RS_L", rs_Left);
+		cv::imshow("RS_R", rs_Right);
+
 		std::vector<cv::Point> rightList;
 		getLinePoints_SlindingBox_(rs_Right, rightList, right_MaxLoc - cv::Point(16, 16), right_Orient, cv::Size(32, 32), 32);
 
-		cv::imshow("RS_L", rs_Left);
-		cv::imshow("RS_R", rs_Right);
 		//cv::waitKey();
 
 		cv::putText(img, std::to_string(count), cv::Point(500, 300), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
@@ -234,7 +236,7 @@ int main()
 				cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 0, 255), 1);
 		}
 
-		if (right_MaxVal > 0.5 && left_MaxVal > 0.5 && rightList.size()>2)
+		if (right_MaxVal > 0.5 && left_MaxVal > 0.5 && rightList.size()>1)
 		{
 			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(left_MaxLoc), toOriginal(rightList[0]), toOriginal(rightList.back()));
 			
@@ -257,7 +259,7 @@ int main()
 		}
 		cv::imshow("color", img);
 		cv::imshow("depth", dimg);
-		cv::waitKey(10);
+		cv::waitKey();
 		count++;
 	}
 	

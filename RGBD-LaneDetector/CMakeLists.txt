@@ -25,6 +25,7 @@ target_link_libraries( libImgProcCUDA ${OpenCV_LIBS})
 
 add_executable( Test_Pointcloud Test_Pointcloud.cpp )
 target_link_libraries( Test_Pointcloud ${OpenCV_LIBS} libImgProcCUDA)
+set_target_properties(Test_Pointcloud PROPERTIES LINK_FLAGS "/ignore:4244")
 
 set(Build_RansacPlane false CACHE BOOL "Build pcl processing")
 if(Build_RansacPlane)
@@ -49,5 +50,9 @@ if(Build_Tests)
 	target_link_libraries( Test_TemplateMatching ${OpenCV_LIBS} libImgProcCUDA)
 	add_executable( Test_Matching_Synth Test_Matching_Synth.cpp)
 	target_link_libraries( Test_Matching_Synth ${OpenCV_LIBS} libImgProcCUDA)
+	
+	add_executable( Test_Matching_ATC2017 Test_Matching_ATC2017.cpp)
+	target_link_libraries( Test_Matching_ATC2017 ${OpenCV_LIBS} libImgProcCUDA)
+	set_target_properties(Test_Matching_ATC2017 PROPERTIES LINK_FLAGS "/ignore:4244")
 endif()
 

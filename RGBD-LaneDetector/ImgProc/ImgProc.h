@@ -25,6 +25,13 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	cv::Size boxSize = cv::Size(32,32), 
 	int jumpStep = 32);
 
+
 int countNonZeroCenter(cv::Mat & _map, cv::Point & center);
+
+#define INVALID_CVPOINT2i cv::Point2i(-1, -1)
+
+cv::Point cpu_findMinmax(const cv::Mat & matchingResult, double & maxVal);
+
+cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxVal);
 
 #endif
