@@ -12,13 +12,15 @@ int64 st, et;
 #define CV_COLOR_GREEN cv::Scalar(0, 255, 0)
 #define CV_COLOR_BLUE cv::Scalar(255, 0, 0)
 
+//#define DISPLAY_OLD_METHOD
+
 using namespace cv;
 
 cv::Size templateSize(32, 32);
 cv::Point templateCenter(16, 16);
 
  //Synthetic data params
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
 int count = 400;
 bool needResize = true;
 cv::Size fullImg_Size(1280, 760);
@@ -68,16 +70,19 @@ void displayKernel(MatchingKernel & kernel)
 }
 
 #define D_BETA 0.2f
+#define D_GAMMA 0.2f
 #define  depthThresh 1000
-void computeGeometricMap(cv::Mat & dImage_Meter, cv::Mat & resultMap)
+void compute_Geometric_Map(cv::Mat & dImage_Meter, cv::Mat & resultMap)
 {
 	resultMap = cv::Mat(matchResult_Size, CV_32FC1, cv::Scalar(0));
 	for (int i = 0; i < resultMap.rows; i++){
 		for (int j = 0; j < resultMap.cols; j++){
 			cv::Point rsPoint(j, i);
 			float d = float(dImage_Meter.at<ushort>(rsPoint + orgTemplate));
-			if (d != 0 && d < depthThresh){ resultMap.at<float>(rsPoint) = D_BETA*((depthThresh - d) / depthThresh); }
-			else{	resultMap.at<float>(rsPoint) = D_BETA*(float(i) / resultMap.rows);}
+			if (d != 0 && d < depthThresh){ 
+				resultMap.at<float>(rsPoint) = D_BETA * ((depthThresh - d) / depthThresh);		}
+			else{	
+				resultMap.at<float>(rsPoint) = D_BETA * ( float(i) / resultMap.rows );	}
 		}
 	}
 }
@@ -93,7 +98,7 @@ void compute_Normal_RespondMap(cv::Mat & normalMap, cv::Mat & resultMap)
 			cv::Vec3f n = normalMap.at<cv::Vec3f>(rsPoint + orgTemplate);
 			if (!std::isnan(n[2]))
 			{
-				resultMap.at<float>(rsPoint) = D_BETA*fabs(-1 + 2*n.dot(cv::Vec3f(0, 1, 0)));
+				resultMap.at<float>(rsPoint) = D_GAMMA * fabs(n.dot(cv::Vec3f(0, 1, 0)));
 			}
 		}
 	}
@@ -141,12 +146,13 @@ int main()
 		n_estimate(xyzMap, normalMap);
 		cv::Mat rsDMap,rsDMap_2;
 		compute_Normal_RespondMap(normalMap, rsDMap);
-		computeGeometricMap(dimg, rsDMap_2);
+		compute_Geometric_Map(dimg, rsDMap_2);
 
 		cv::Mat imgProc = img(laneRegion);
 		cv::Mat imgGray, imgBin;
 		cv::cvtColor(imgProc, imgGray, cv::COLOR_RGB2GRAY);
 		cv::threshold(imgGray, imgBin, 100, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
+		//imgBin = imgGray;s
 		
 		cv::Mat match_right, match_left;
 		cv::matchTemplate(imgBin, mKernel.right, match_right, CV_TM_CCOEFF_NORMED);
@@ -155,11 +161,23 @@ int main()
 		//cv::Mat geoMat;computeGeometricMap(dimg, geoMat);
 
 		double right_MaxVal,left_MaxVal;
+
+#ifdef DISPLAY_OLD_METHOD
+		cv::Point right_MaxLoc_old = cpu_findMinmax(match_right, right_MaxVal);
+		cv::Point left_MaxLoc_old = cpu_findMinmax(match_left, left_MaxVal);
+		cv::putText(img, std::to_string(right_MaxVal), toOriginal(right_MaxLoc_old) - cv::Point(20, 15),
+			cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, CV_COLOR_RED, 1);
+		cv::putText(img, std::to_string(left_MaxVal), toOriginal(left_MaxLoc_old) - cv::Point(20, 15),
+			cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, CV_COLOR_BLUE, 1);
+		cv::circle(img, toOriginal(right_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
+		cv::circle(img, toOriginal(left_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
+#endif
 		cv::Point right_MaxLoc = cpu_findMinmax(match_right + rsDMap + rsDMap_2, right_MaxVal);
 		cv::Point left_MaxLoc = cpu_findMinmax(match_left + rsDMap + rsDMap_2, left_MaxVal);
 
 		cv::circle(img, toOriginal(right_MaxLoc), 7, CV_COLOR_RED, 2);
 		cv::circle(img, toOriginal(left_MaxLoc), 7, CV_COLOR_BLUE, 2);
+
 
 		cv::putText(img, std::to_string(count), cv::Point(500, 300), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
@@ -168,9 +186,14 @@ int main()
 		cv::imshow("norm", rsDMap);
 
 		cv::imshow("rs", match_left + rsDMap + rsDMap_2);
-		char key = cv::waitKey();
+		int key = cv::waitKey();
+		
 		if (key == 27) break;
+		if (key == 32) { count-=2; };
+
 		if (key == 'p') cv::waitKey();
+		if (key == 's') cv::imwrite("test" + std::to_string(count)+".png",img);
+		
 		count++;
 	}
 }
