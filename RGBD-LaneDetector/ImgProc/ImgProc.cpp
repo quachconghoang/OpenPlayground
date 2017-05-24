@@ -61,6 +61,48 @@ cv::Vec2f getAnglePCA(cv::Mat & tmpRS)
 	return cv::Vec2f(eigen_vecs[0].x, eigen_vecs[0].y);
 }
 
+void getAnglePCA(cv::Mat & tmpRS_normalized, PCA_Result & tRS)
+{
+	std::vector<cv::Point2d> pcaData;
+	for (int i = 0; i < tmpRS_normalized.rows; i++){
+		for (int j = 0; j < tmpRS_normalized.cols; j++){
+			if (tmpRS_normalized.at<float>(i, j) > 0.8f){
+				pcaData.push_back(cv::Point2d(j, i));
+			}
+		}
+	}
+
+	if (pcaData.size() < 5) return;
+
+	//Perform PCA analysis
+	cv::Mat data_pts = cv::Mat(pcaData.size(), 2, CV_64FC1, &pcaData[0]);
+	cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+
+	//Store the center of the object
+	cv::Point cntr = cv::Point(
+		static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
+		static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+	
+	std::vector<cv::Point2d> eigen_vecs(2);
+	std::vector<double> eigen_val(2);
+	
+	for (int i = 0; i < 2; ++i)	{
+		eigen_vecs[i] = cv::Point2d(
+			pca_analysis.eigenvectors.at<double>(i, 0),
+			pca_analysis.eigenvectors.at<double>(i, 1));
+		eigen_val[i] = pca_analysis.eigenvalues.at<double>(i, 0);
+	}
+	//std::cout << eigen_vecs << " \n " << eigen_val[0] << "-" << eigen_val[1] <<"\n == \n";
+	if (eigen_vecs[0].y < 0)	{
+		eigen_vecs[0].x *= (-1);
+		eigen_vecs[0].y *= (-1);
+	} //ROTATE
+
+	tRS._vec = cv::Vec2f(eigen_vecs[0].x, eigen_vecs[0].y);
+	tRS._val_1 = eigen_val[0];
+	tRS._val_2 = eigen_val[1];
+}
+
 int countNonZeroCenter(cv::Mat & _map, cv::Point & center)
 {
 	center = cv::Point(0, 0);

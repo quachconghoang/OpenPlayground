@@ -13,6 +13,7 @@ int64 st, et;
 #define CV_COLOR_BLUE cv::Scalar(255, 0, 0)
 
 //#define DISPLAY_OLD_METHOD
+//#define REFINE_TEMPLATE
 
 using namespace cv;
 
@@ -44,6 +45,12 @@ cv::Size matchResult_Size(
 	laneRegion.width - templateSize.width + 1,
 	laneRegion.height - templateSize.height + 1);
 
+#define D_BETA 0.2f
+#define D_GAMMA 0.2f
+#define  depthThresh 1000
+bool use_normal = false;
+bool use_depth = false;
+
 struct MatchingKernel
 {
 	cv::Mat left, right;
@@ -51,13 +58,21 @@ struct MatchingKernel
 	cv::Mat right_enhance;
 };
 
+
 void generateTemplate(MatchingKernel & kernel)
 {
 	kernel.left = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 	kernel.right = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
-	
+	kernel.left_enhance = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
+	kernel.right_enhance = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
+
 	cv::line(kernel.left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
 	cv::line(kernel.right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
+
+}
+
+void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & cKernel)
+{
 
 }
 
@@ -69,9 +84,6 @@ void displayKernel(MatchingKernel & kernel)
 	cv::imshow("K", displayMat);
 }
 
-#define D_BETA 0.2f
-#define D_GAMMA 0.2f
-#define  depthThresh 1000
 void compute_Geometric_Map(cv::Mat & dImage_Meter, cv::Mat & resultMap)
 {
 	resultMap = cv::Mat(matchResult_Size, CV_32FC1, cv::Scalar(0));
@@ -144,9 +156,9 @@ int main()
 		dev_xyzMap.download(xyzMap);
 
 		n_estimate(xyzMap, normalMap);
-		cv::Mat rsDMap,rsDMap_2;
-		compute_Normal_RespondMap(normalMap, rsDMap);
-		compute_Geometric_Map(dimg, rsDMap_2);
+		cv::Mat res_normalMap,res_depthMap;
+		compute_Normal_RespondMap(normalMap, res_normalMap);
+		compute_Geometric_Map(dimg, res_depthMap);
 
 		cv::Mat imgProc = img(laneRegion);
 		cv::Mat imgGray, imgBin;
@@ -154,17 +166,16 @@ int main()
 		cv::threshold(imgGray, imgBin, 100, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
 		//imgBin = imgGray;s
 		
-		cv::Mat match_right, match_left;
-		cv::matchTemplate(imgBin, mKernel.right, match_right, CV_TM_CCOEFF_NORMED);
-		cv::matchTemplate(imgBin, mKernel.left, match_left, CV_TM_CCOEFF_NORMED);
+		cv::Mat match_RGB_right, match_RGB_left;
+		cv::matchTemplate(imgBin, mKernel.right, match_RGB_right, CV_TM_CCOEFF_NORMED);
+		cv::matchTemplate(imgBin, mKernel.left, match_RGB_left, CV_TM_CCOEFF_NORMED);
 		
 		//cv::Mat geoMat;computeGeometricMap(dimg, geoMat);
 
 		double right_MaxVal,left_MaxVal;
-
 #ifdef DISPLAY_OLD_METHOD
-		cv::Point right_MaxLoc_old = cpu_findMinmax(match_right, right_MaxVal);
-		cv::Point left_MaxLoc_old = cpu_findMinmax(match_left, left_MaxVal);
+		cv::Point right_MaxLoc_old = cpu_findMinmax(match_RGB_right, right_MaxVal);
+		cv::Point left_MaxLoc_old = cpu_findMinmax(match_RGB_left, left_MaxVal);
 		cv::putText(img, std::to_string(right_MaxVal), toOriginal(right_MaxLoc_old) - cv::Point(20, 15),
 			cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, CV_COLOR_RED, 1);
 		cv::putText(img, std::to_string(left_MaxVal), toOriginal(left_MaxLoc_old) - cv::Point(20, 15),
@@ -172,20 +183,51 @@ int main()
 		cv::circle(img, toOriginal(right_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
 		cv::circle(img, toOriginal(left_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
 #endif
-		cv::Point right_MaxLoc = cpu_findMinmax(match_right + rsDMap + rsDMap_2, right_MaxVal);
-		cv::Point left_MaxLoc = cpu_findMinmax(match_left + rsDMap + rsDMap_2, left_MaxVal);
+
+		cv::Mat match_rgbd_left = match_RGB_left;
+		cv::Mat match_rgbd_right = match_RGB_right;
+		
+		if (use_depth){
+			match_rgbd_left += res_depthMap;
+			match_rgbd_right += res_depthMap;
+		}
+
+		if (use_normal){
+			match_rgbd_left += res_normalMap;
+			match_rgbd_right += res_normalMap;
+		}
+
+		
+		cv::Point left_MaxLoc = cpu_findMinmax(match_rgbd_left, left_MaxVal);
+		cv::Point right_MaxLoc = cpu_findMinmax(match_rgbd_right, right_MaxVal);
+
+		cv::Rect left_InitRect = createSafeRect(left_MaxLoc - cv::Point(16, 16), match_RGB_left.size(), templateSize);
+		cv::Rect right_InitRect = createSafeRect(right_MaxLoc - cv::Point(16, 16), match_RGB_right.size(), templateSize);
+
+		cv::Vec2f left_Orient, right_Orient;
+		PCA_Result left_pca, right_pca;
+		if (left_MaxVal > 0.5 && right_MaxVal > 0.5) {
+			getAnglePCA(match_RGB_left(left_InitRect),left_pca);
+			getAnglePCA(match_RGB_right(right_InitRect),right_pca);
+		}
 
 		cv::circle(img, toOriginal(right_MaxLoc), 7, CV_COLOR_RED, 2);
 		cv::circle(img, toOriginal(left_MaxLoc), 7, CV_COLOR_BLUE, 2);
+		
+		cv::arrowedLine(img, toOriginal(left_MaxLoc),
+			toOriginal(left_MaxLoc - cv::Point(30 * left_pca._vec[0], 30 * left_pca._vec[1])), CV_COLOR_BLUE);
+		cv::arrowedLine(img, toOriginal(right_MaxLoc),
+			toOriginal(right_MaxLoc - cv::Point(120 * right_pca._vec[0], 120 * right_pca._vec[1])), CV_COLOR_RED);
+
 
 
 		cv::putText(img, std::to_string(count), cv::Point(500, 300), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
 		cv::imshow("color", img);
 		cv::imshow("gray", imgBin);
-		cv::imshow("norm", rsDMap);
+		cv::imshow("norm", res_normalMap);
 
-		cv::imshow("rs", match_left + rsDMap + rsDMap_2);
+		cv::imshow("rs", match_RGB_left + res_normalMap + res_depthMap);
 		int key = cv::waitKey();
 		
 		if (key == 27) break;

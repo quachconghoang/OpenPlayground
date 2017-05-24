@@ -17,8 +17,17 @@ void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap);
 cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Point2i p);
 
 //Template matching utilities
+struct PCA_Result {
+	cv::Vec2f _vec;
+	float _val_1;//Primary
+	float _val_2;//Secondary
+};
+
 cv::Rect createSafeRect(cv::Point tl_point, cv::Size imgSize, cv::Size preferedRectSize);
 cv::Vec2f getAnglePCA(cv::Mat & tmpRS);
+
+void getAnglePCA(cv::Mat & tmpRS_normalized, PCA_Result & tRS);
+
 void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	std::vector<cv::Point> & listPoints, 
 	cv::Point initPoint, cv::Vec2f pca_rs,
