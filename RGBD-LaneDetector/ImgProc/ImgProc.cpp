@@ -63,6 +63,7 @@ cv::Vec2f getAnglePCA(cv::Mat & tmpRS)
 
 void getAnglePCA(cv::Mat & tmpRS_normalized, PCA_Result & tRS)
 {
+	cv::normalize(tmpRS_normalized, tmpRS_normalized, 0, 1, cv::NORM_MINMAX, -1);
 	std::vector<cv::Point2d> pcaData;
 	for (int i = 0; i < tmpRS_normalized.rows; i++){
 		for (int j = 0; j < tmpRS_normalized.cols; j++){

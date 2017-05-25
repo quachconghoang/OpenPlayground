@@ -19,6 +19,7 @@ using namespace cv;
 
 cv::Size templateSize(32, 32);
 cv::Point templateCenter(16, 16);
+cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
 std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
@@ -45,11 +46,12 @@ cv::Size matchResult_Size(
 	laneRegion.width - templateSize.width + 1,
 	laneRegion.height - templateSize.height + 1);
 
-#define D_BETA 0.2f
+#define D_BETA 0.1f
 #define D_GAMMA 0.2f
-#define  depthThresh 1000
-bool use_normal = false;
-bool use_depth = false;
+#define depthThresh 1000
+#define GRAY_THRESH 80
+bool use_normal = true; // Using normal constraint for all lines
+bool use_depth = true; // Using depth constraint for SOLID line - not DASH lines
 
 struct MatchingKernel
 {
@@ -81,6 +83,8 @@ void displayKernel(MatchingKernel & kernel)
 	cv::Mat displayMat(88,88,CV_8UC1,128);
 	kernel.left.copyTo(displayMat(cv::Rect(8, 8, 32, 32)));
 	kernel.right.copyTo(displayMat(cv::Rect(48, 8, 32, 32)));
+	kernel.left_enhance.copyTo(displayMat(cv::Rect(8, 48, 32, 32)));
+	kernel.right_enhance.copyTo(displayMat(cv::Rect(48, 48, 32, 32)));
 	cv::imshow("K", displayMat);
 }
 
@@ -148,31 +152,30 @@ int main()
 			cv::resize(dimg, dimg, processImg_Size, 0, 0, cv::INTER_NEAREST);
 		}
 
+		//1. Compute XYZ and Normal maps
 		cv::cuda::GpuMat dev_dMat(dimg);
 		cv::cuda::GpuMat dev_xyzMap(dimg.rows, dimg.cols, CV_32FC3);
-
 		ImgProc3D::convertTo_Point3fMap(dev_dMat, m_camInfo, dev_xyzMap);
 		cv::Mat xyzMap, normalMap;
 		dev_xyzMap.download(xyzMap);
-
 		n_estimate(xyzMap, normalMap);
+
+		//2. Compute Geometric response map
 		cv::Mat res_normalMap,res_depthMap;
 		compute_Normal_RespondMap(normalMap, res_normalMap);
 		compute_Geometric_Map(dimg, res_depthMap);
 
+		//3. Template matching rgb image
 		cv::Mat imgProc = img(laneRegion);
 		cv::Mat imgGray, imgBin;
 		cv::cvtColor(imgProc, imgGray, cv::COLOR_RGB2GRAY);
-		cv::threshold(imgGray, imgBin, 100, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
-		//imgBin = imgGray;s
+		cv::threshold(imgGray, imgBin, GRAY_THRESH, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
 		
 		cv::Mat match_RGB_right, match_RGB_left;
 		cv::matchTemplate(imgBin, mKernel.right, match_RGB_right, CV_TM_CCOEFF_NORMED);
 		cv::matchTemplate(imgBin, mKernel.left, match_RGB_left, CV_TM_CCOEFF_NORMED);
-		
-		//cv::Mat geoMat;computeGeometricMap(dimg, geoMat);
-
 		double right_MaxVal,left_MaxVal;
+
 #ifdef DISPLAY_OLD_METHOD
 		cv::Point right_MaxLoc_old = cpu_findMinmax(match_RGB_right, right_MaxVal);
 		cv::Point left_MaxLoc_old = cpu_findMinmax(match_RGB_left, left_MaxVal);
@@ -188,7 +191,7 @@ int main()
 		cv::Mat match_rgbd_right = match_RGB_right;
 		
 		if (use_depth){
-			match_rgbd_left += res_depthMap;
+			//match_rgbd_left += res_depthMap;
 			match_rgbd_right += res_depthMap;
 		}
 
@@ -207,8 +210,8 @@ int main()
 		cv::Vec2f left_Orient, right_Orient;
 		PCA_Result left_pca, right_pca;
 		if (left_MaxVal > 0.5 && right_MaxVal > 0.5) {
-			getAnglePCA(match_RGB_left(left_InitRect),left_pca);
-			getAnglePCA(match_RGB_right(right_InitRect),right_pca);
+			getAnglePCA(match_RGB_left(left_InitRect).clone(),left_pca);
+			getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
 		}
 
 		cv::circle(img, toOriginal(right_MaxLoc), 7, CV_COLOR_RED, 2);
