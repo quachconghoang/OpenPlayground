@@ -60,6 +60,13 @@ struct MatchingKernel
 	cv::Mat right_enhance;
 };
 
+struct MatchingResult
+{
+	double RGB_max_val;
+	cv::Point RGB_max_loc;
+	double RGBD_max_val;
+	cv::Point RGBD_max_loc;
+};
 
 void generateTemplate(MatchingKernel & kernel)
 {
@@ -70,12 +77,22 @@ void generateTemplate(MatchingKernel & kernel)
 
 	cv::line(kernel.left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
 	cv::line(kernel.right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
-
+	cv::line(kernel.left_enhance, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
+	cv::line(kernel.right_enhance, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
 }
 
-void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & cKernel)
+void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & kernel)
 {
+	kernel.left_enhance.setTo(cv::Scalar(0));
+	kernel.right_enhance.setTo(cv::Scalar(0));
 
+	cv::Point l_start = templateCenter - cv::Point(30 * fabs(leftPCA._vec[0]), -30 * fabs(leftPCA._vec[1]));
+	cv::Point l_end = templateCenter + cv::Point(30 * fabs(leftPCA._vec[0]), -30 * fabs(leftPCA._vec[1]));
+	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(255), 12);
+	
+	cv::Point r_start = templateCenter - cv::Point(30 * fabs(rightPCA._vec[0]), 30 * fabs(rightPCA._vec[1]));
+	cv::Point r_end = templateCenter + cv::Point(30 * fabs(rightPCA._vec[0]), 30 * fabs(rightPCA._vec[1]));
+	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(255), 12);
 }
 
 void displayKernel(MatchingKernel & kernel)
@@ -174,7 +191,9 @@ int main()
 		cv::Mat match_RGB_right, match_RGB_left;
 		cv::matchTemplate(imgBin, mKernel.right, match_RGB_right, CV_TM_CCOEFF_NORMED);
 		cv::matchTemplate(imgBin, mKernel.left, match_RGB_left, CV_TM_CCOEFF_NORMED);
-		double right_MaxVal,left_MaxVal;
+		//double right_MaxVal,left_MaxVal;
+
+		MatchingResult leftRS,rightRS;
 
 #ifdef DISPLAY_OLD_METHOD
 		cv::Point right_MaxLoc_old = cpu_findMinmax(match_RGB_right, right_MaxVal);
@@ -200,27 +219,34 @@ int main()
 			match_rgbd_right += res_normalMap;
 		}
 
+		// Check RGB matching
+		leftRS.RGB_max_loc = cpu_findMinmax(match_RGB_left, leftRS.RGB_max_val);
+		rightRS.RGB_max_loc = cpu_findMinmax(match_RGB_right, rightRS.RGB_max_val);
 		
-		cv::Point left_MaxLoc = cpu_findMinmax(match_rgbd_left, left_MaxVal);
-		cv::Point right_MaxLoc = cpu_findMinmax(match_rgbd_right, right_MaxVal);
+		// Check RGB-D matching
+		leftRS.RGBD_max_loc = cpu_findMinmax(match_rgbd_left, leftRS.RGBD_max_val);
+		rightRS.RGBD_max_loc = cpu_findMinmax(match_rgbd_right, rightRS.RGBD_max_val);
 
-		cv::Rect left_InitRect = createSafeRect(left_MaxLoc - cv::Point(16, 16), match_RGB_left.size(), templateSize);
-		cv::Rect right_InitRect = createSafeRect(right_MaxLoc - cv::Point(16, 16), match_RGB_right.size(), templateSize);
+		cv::Rect left_InitRect = createSafeRect(leftRS.RGB_max_loc - cv::Point(16, 16), match_RGB_left.size(), templateSize);
+		cv::Rect right_InitRect = createSafeRect(rightRS.RGB_max_loc - cv::Point(16, 16), match_RGB_right.size(), templateSize);
 
-		cv::Vec2f left_Orient, right_Orient;
 		PCA_Result left_pca, right_pca;
-		if (left_MaxVal > 0.5 && right_MaxVal > 0.5) {
+
+		if (leftRS.RGB_max_val > 0.7 && rightRS.RGB_max_val > 0.7) {
 			getAnglePCA(match_RGB_left(left_InitRect).clone(),left_pca);
 			getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
-		}
 
-		cv::circle(img, toOriginal(right_MaxLoc), 7, CV_COLOR_RED, 2);
-		cv::circle(img, toOriginal(left_MaxLoc), 7, CV_COLOR_BLUE, 2);
-		
-		cv::arrowedLine(img, toOriginal(left_MaxLoc),
-			toOriginal(left_MaxLoc - cv::Point(30 * left_pca._vec[0], 30 * left_pca._vec[1])), CV_COLOR_BLUE);
-		cv::arrowedLine(img, toOriginal(right_MaxLoc),
-			toOriginal(right_MaxLoc - cv::Point(120 * right_pca._vec[0], 120 * right_pca._vec[1])), CV_COLOR_RED);
+			updateTemplate(left_pca, right_pca, mKernel);
+		}
+		displayKernel(mKernel);
+
+		cv::circle(img, toOriginal(leftRS.RGBD_max_loc), 7, CV_COLOR_BLUE, 2);
+		cv::circle(img, toOriginal(rightRS.RGBD_max_loc), 7, CV_COLOR_RED, 2);
+
+		cv::arrowedLine(img, toOriginal(leftRS.RGBD_max_loc),
+			toOriginal(leftRS.RGBD_max_loc - cv::Point(30 * left_pca._vec[0], 30 * left_pca._vec[1])), CV_COLOR_BLUE);
+		cv::arrowedLine(img, toOriginal(rightRS.RGBD_max_loc),
+			toOriginal(rightRS.RGBD_max_loc - cv::Point(120 * right_pca._vec[0], 120 * right_pca._vec[1])), CV_COLOR_RED);
 
 
 
@@ -230,7 +256,7 @@ int main()
 		cv::imshow("gray", imgBin);
 		cv::imshow("norm", res_normalMap);
 
-		cv::imshow("rs", match_RGB_left + res_normalMap + res_depthMap);
+		//cv::imshow("rs", match_RGB_left + res_normalMap + res_depthMap);
 		int key = cv::waitKey();
 		
 		if (key == 27) break;
