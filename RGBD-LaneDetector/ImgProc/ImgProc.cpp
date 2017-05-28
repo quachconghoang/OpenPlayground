@@ -130,12 +130,13 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	cv::Size boxSize /* = cv::Size(32,32) */, int jumpStep /* = 32 */)
 {
 	//cv::normalize(tmpResult, tmpResult, 0, 1, cv::NORM_MINMAX, -1);
-	cv::threshold(tmpResult, tmpResult, 0.8, 1, CV_THRESH_BINARY);
+	cv::threshold(tmpResult, tmpResult, 0.4, 1, CV_THRESH_BINARY);
 
 	cv::Rect rsRect = cv::Rect(0, 0, tmpResult.cols, tmpResult.rows);
 	cv::Point jumpDistance(jumpStep * fabs(pca_rs[0]), jumpStep * fabs(pca_rs[1]));
 
 	listPoints.push_back(initPoint);
+	initPoint -= cv::Point(boxSize.width / 2, boxSize.height/2);
 
 	//Go Down --||--
 	cv::Point boxTL = initPoint;
@@ -145,7 +146,7 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		cv::Rect newBox(boxTL, boxBR);
 		cv::Point tmpCenter;
 		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
-		if (nonZero < 20) { break; }
+		if (nonZero < 10) { break; }
 		else{
 			listPoints.push_back(tmpCenter + boxTL);
 			boxTL += tmpCenter;
@@ -162,7 +163,7 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		cv::Rect newBox(boxTL, boxBR);
 		cv::Point tmpCenter;
 		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
-		if (nonZero < 20){
+		if (nonZero < 10){
 			break;
 		}
 		else{

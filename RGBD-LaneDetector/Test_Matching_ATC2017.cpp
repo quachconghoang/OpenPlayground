@@ -22,7 +22,7 @@ cv::Point templateCenter(16, 16);
 cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
 int count = 400;
 bool needResize = true;
 cv::Size fullImg_Size(1280, 760);
@@ -46,12 +46,14 @@ cv::Size matchResult_Size(
 	laneRegion.width - templateSize.width + 1,
 	laneRegion.height - templateSize.height + 1);
 
+#define TEMP_LINE_WIDTH 10
 #define D_BETA 0.1f
 #define D_GAMMA 0.2f
 #define depthThresh 1000
-#define GRAY_THRESH 80
+#define GRAY_THRESH 100
 bool use_normal = true; // Using normal constraint for all lines
 bool use_depth = true; // Using depth constraint for SOLID line - not DASH lines
+bool use_refined_template = false;
 
 struct MatchingKernel
 {
@@ -75,10 +77,10 @@ void generateTemplate(MatchingKernel & kernel)
 	kernel.left_enhance = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 	kernel.right_enhance = cv::Mat(templateSize, CV_8UC1, cv::Scalar(0));
 
-	cv::line(kernel.left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
-	cv::line(kernel.right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
-	cv::line(kernel.left_enhance, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), 12);
-	cv::line(kernel.right_enhance, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), 12);
+	cv::line(kernel.left, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), TEMP_LINE_WIDTH);
+	cv::line(kernel.right, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), TEMP_LINE_WIDTH);
+	cv::line(kernel.left_enhance, cv::Point(0, 32), cv::Point(32, 0), cv::Scalar(255), TEMP_LINE_WIDTH);
+	cv::line(kernel.right_enhance, cv::Point(0, 0), cv::Point(32, 32), cv::Scalar(255), TEMP_LINE_WIDTH);
 }
 
 void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & kernel)
@@ -86,13 +88,13 @@ void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & ke
 	kernel.left_enhance.setTo(cv::Scalar(0));
 	kernel.right_enhance.setTo(cv::Scalar(0));
 
-	cv::Point l_start = templateCenter - cv::Point(30 * fabs(leftPCA._vec[0]), -30 * fabs(leftPCA._vec[1]));
-	cv::Point l_end = templateCenter + cv::Point(30 * fabs(leftPCA._vec[0]), -30 * fabs(leftPCA._vec[1]));
-	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(255), 12);
+	cv::Point l_start = templateCenter - cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
+	cv::Point l_end = templateCenter + cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
+	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(255), TEMP_LINE_WIDTH);
 	
-	cv::Point r_start = templateCenter - cv::Point(30 * fabs(rightPCA._vec[0]), 30 * fabs(rightPCA._vec[1]));
-	cv::Point r_end = templateCenter + cv::Point(30 * fabs(rightPCA._vec[0]), 30 * fabs(rightPCA._vec[1]));
-	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(255), 12);
+	cv::Point r_start = templateCenter - cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
+	cv::Point r_end = templateCenter + cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
+	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(255), TEMP_LINE_WIDTH);
 }
 
 void displayKernel(MatchingKernel & kernel)
@@ -103,6 +105,16 @@ void displayKernel(MatchingKernel & kernel)
 	kernel.left_enhance.copyTo(displayMat(cv::Rect(8, 48, 32, 32)));
 	kernel.right_enhance.copyTo(displayMat(cv::Rect(48, 48, 32, 32)));
 	cv::imshow("K", displayMat);
+}
+
+void displayMatchingResults(cv::Mat & img, MatchingResult mRS, PCA_Result pcaRS, cv::Scalar colorCode)
+{
+	cv::circle(img, toOriginal(mRS.RGBD_max_loc), 7, colorCode, 2);
+	cv::putText(img, std::to_string(mRS.RGBD_max_val), toOriginal(mRS.RGBD_max_loc) - cv::Point(20, 15),
+		cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, colorCode, 1);
+
+	cv::arrowedLine(img, toOriginal(mRS.RGBD_max_loc),
+		toOriginal(mRS.RGBD_max_loc - cv::Point(60 * pcaRS._vec[0], 60 * pcaRS._vec[1])), colorCode);
 }
 
 void compute_Geometric_Map(cv::Mat & dImage_Meter, cv::Mat & resultMap)
@@ -137,8 +149,27 @@ void compute_Normal_RespondMap(cv::Mat & normalMap, cv::Mat & resultMap)
 	}
 }
 
-void cpu_matchingTemplates()
-{}
+void compute_Adjust_RSMap_1(cv::Mat & rgbd_adjust, cv::Mat & nMap, float mThreshold)
+{
+	for (int i = 0; i < rgbd_adjust.rows; i++){
+		for (int j = 0; j < rgbd_adjust.cols; j++){
+			if (rgbd_adjust.at<float>(i, j) > mThreshold){
+				rgbd_adjust.at<float>(i, j) += nMap.at<float>(i, j);
+			}
+		}
+	}
+}
+void compute_Adjust_RSMap_2(cv::Mat & rgbd_adjust, cv::Mat & gMap, cv::Mat & nMap, float mThreshold)
+{
+	for (int i = 0; i < rgbd_adjust.rows; i++){
+		for (int j = 0; j < rgbd_adjust.cols; j++){
+			if (rgbd_adjust.at<float>(i, j) > mThreshold){
+				float adjParam = (gMap.at<float>(i, j) + nMap.at<float>(i, j));
+				rgbd_adjust.at<float>(i, j) += adjParam;
+			}
+		}
+	}
+}
 
 int main()
 {
@@ -189,65 +220,80 @@ int main()
 		cv::threshold(imgGray, imgBin, GRAY_THRESH, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
 		
 		cv::Mat match_RGB_right, match_RGB_left;
-		cv::matchTemplate(imgBin, mKernel.right, match_RGB_right, CV_TM_CCOEFF_NORMED);
-		cv::matchTemplate(imgBin, mKernel.left, match_RGB_left, CV_TM_CCOEFF_NORMED);
-		//double right_MaxVal,left_MaxVal;
 
-		MatchingResult leftRS,rightRS;
-
-#ifdef DISPLAY_OLD_METHOD
-		cv::Point right_MaxLoc_old = cpu_findMinmax(match_RGB_right, right_MaxVal);
-		cv::Point left_MaxLoc_old = cpu_findMinmax(match_RGB_left, left_MaxVal);
-		cv::putText(img, std::to_string(right_MaxVal), toOriginal(right_MaxLoc_old) - cv::Point(20, 15),
-			cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, CV_COLOR_RED, 1);
-		cv::putText(img, std::to_string(left_MaxVal), toOriginal(left_MaxLoc_old) - cv::Point(20, 15),
-			cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, CV_COLOR_BLUE, 1);
-		cv::circle(img, toOriginal(right_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
-		cv::circle(img, toOriginal(left_MaxLoc_old), 5, CV_COLOR_GREEN, 2);
-#endif
-
-		cv::Mat match_rgbd_left = match_RGB_left;
-		cv::Mat match_rgbd_right = match_RGB_right;
+		if (use_refined_template){
+			cv::matchTemplate(imgBin, mKernel.right_enhance, match_RGB_right, CV_TM_CCOEFF_NORMED);
+			cv::matchTemplate(imgBin, mKernel.left_enhance, match_RGB_left, CV_TM_CCOEFF_NORMED);
+		}
+		else{
+			cv::matchTemplate(imgBin, mKernel.right, match_RGB_right, CV_TM_CCOEFF_NORMED);
+			cv::matchTemplate(imgBin, mKernel.left, match_RGB_left, CV_TM_CCOEFF_NORMED);
+		}
 		
-		if (use_depth){
-			//match_rgbd_left += res_depthMap;
-			match_rgbd_right += res_depthMap;
-		}
-
-		if (use_normal){
-			match_rgbd_left += res_normalMap;
-			match_rgbd_right += res_normalMap;
-		}
+		MatchingResult leftRS,rightRS;
 
 		// Check RGB matching
 		leftRS.RGB_max_loc = cpu_findMinmax(match_RGB_left, leftRS.RGB_max_val);
 		rightRS.RGB_max_loc = cpu_findMinmax(match_RGB_right, rightRS.RGB_max_val);
 		
-		// Check RGB-D matching
+		//4. RGB-D matching	
+		cv::Mat match_rgbd_left = match_RGB_left;
+		cv::Mat match_rgbd_right = match_RGB_right;
+		if (use_depth)
+		{
+			compute_Adjust_RSMap_1(match_RGB_left, res_normalMap, 0.5f);
+			//compute_Adjust_RSMap_2(match_RGB_left, res_depthMap, res_normalMap, 0.5f);
+			compute_Adjust_RSMap_2(match_RGB_right, res_depthMap, res_normalMap, 0.5f);
+		}
+
 		leftRS.RGBD_max_loc = cpu_findMinmax(match_rgbd_left, leftRS.RGBD_max_val);
 		rightRS.RGBD_max_loc = cpu_findMinmax(match_rgbd_right, rightRS.RGBD_max_val);
 
-		cv::Rect left_InitRect = createSafeRect(leftRS.RGB_max_loc - cv::Point(16, 16), match_RGB_left.size(), templateSize);
-		cv::Rect right_InitRect = createSafeRect(rightRS.RGB_max_loc - cv::Point(16, 16), match_RGB_right.size(), templateSize);
+		cv::Rect left_InitRect, right_InitRect;
+		left_InitRect = createSafeRect(leftRS.RGB_max_loc - cv::Point(16, 16), match_RGB_left.size(), templateSize);
+		right_InitRect = createSafeRect(rightRS.RGB_max_loc - cv::Point(16, 16), match_RGB_right.size(), templateSize);
 
+		// 5. Update template
 		PCA_Result left_pca, right_pca;
-
-		if (leftRS.RGB_max_val > 0.7 && rightRS.RGB_max_val > 0.7) {
-			getAnglePCA(match_RGB_left(left_InitRect).clone(),left_pca);
-			getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
-
+		if (leftRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_left(left_InitRect).clone(), left_pca);
+		if (rightRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
+		
+		if (leftRS.RGB_max_val > 0.75 && rightRS.RGB_max_val > 0.75) 
+		{
 			updateTemplate(left_pca, right_pca, mKernel);
+			use_refined_template = true;
 		}
+		else
+		{
+			use_refined_template = false;
+		}
+
+		//cv::Mat match_rgbd_right_bin;
+		//cv::threshold(match_rgbd_right, match_rgbd_right_bin, 0.3, 1, CV_THRESH_BINARY);
+		//match_rgbd_right_bin.convertTo(match_rgbd_right_bin, CV_8UC1);
+		//std::vector<Vec4i> lines;
+		//HoughLinesP(match_rgbd_right_bin, lines, 1, CV_PI / 180, 50, 50, 10);
+		//for (size_t i = 0; i < lines.size(); i++)
+		//{
+		//	Vec4i l = lines[i];
+		//	line(img, toOriginal(Point(l[0], l[1])), toOriginal(Point(l[2], l[3])), Scalar(0, 0, 255), 1, CV_AA);
+		//}
+
+		std::vector<cv::Point> rightList;
+		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(20, 20), 20);
+		if (rightList.size() > 0){
+			cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 0), 2);
+		}
+		for (int i = 0; i < rightList.size(); i++){
+			cv::circle(img, toOriginal(rightList[i]), 5, CV_COLOR_GREEN, 2);
+		}
+
 		displayKernel(mKernel);
+		displayMatchingResults(img, leftRS, left_pca, CV_COLOR_BLUE);
+		displayMatchingResults(img, rightRS, right_pca, CV_COLOR_RED);
 
-		cv::circle(img, toOriginal(leftRS.RGBD_max_loc), 7, CV_COLOR_BLUE, 2);
-		cv::circle(img, toOriginal(rightRS.RGBD_max_loc), 7, CV_COLOR_RED, 2);
-
-		cv::arrowedLine(img, toOriginal(leftRS.RGBD_max_loc),
-			toOriginal(leftRS.RGBD_max_loc - cv::Point(30 * left_pca._vec[0], 30 * left_pca._vec[1])), CV_COLOR_BLUE);
-		cv::arrowedLine(img, toOriginal(rightRS.RGBD_max_loc),
-			toOriginal(rightRS.RGBD_max_loc - cv::Point(120 * right_pca._vec[0], 120 * right_pca._vec[1])), CV_COLOR_RED);
-
+		/*cv::circle(img, toOriginal(leftRS.RGB_max_loc), 5, CV_COLOR_GREEN, 2);
+		cv::circle(img, toOriginal(rightRS.RGB_max_loc), 5, CV_COLOR_GREEN, 2);*/
 
 
 		cv::putText(img, std::to_string(count), cv::Point(500, 300), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
@@ -256,7 +302,8 @@ int main()
 		cv::imshow("gray", imgBin);
 		cv::imshow("norm", res_normalMap);
 
-		//cv::imshow("rs", match_RGB_left + res_normalMap + res_depthMap);
+		cv::imshow("rs_L", match_rgbd_left);
+		cv::imshow("rs_R", match_rgbd_right);
 		int key = cv::waitKey();
 		
 		if (key == 27) break;
