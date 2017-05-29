@@ -73,66 +73,6 @@ void generateTemplate()
 	//cv::waitKey();
 }
 
-cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius, cv::RNG & rng)
-{
-	int tryCount = 0;
-	cv::Point2i ranPoint;
-	do {
-		ranPoint = cv::Point2i(
-			rng.uniform(origin.x - searchRadius, origin.x + searchRadius),
-			rng.uniform(origin.y - searchRadius, origin.y + searchRadius));
-		tryCount++;
-		if (tryCount == 30)
-		{
-			ranPoint = INVALID_CVPOINT2i;
-			break;
-		}
-	} while (dMat.at<ushort>(ranPoint) == 0);
-
-	return ranPoint;
-}
-
-cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point & leftPoint, 
-	cv::Point & rightPointNear, cv::Point & rightPointFar)
-{
-	cv::RNG rng(0xFFFFFFFF);
-
-	cv::Point p1_loc = searchPoint(dMat, rightPointNear, 5, rng);
-	cv::Point p2_loc = searchPoint(dMat, rightPointFar, 5, rng);
-	cv::Point p3_loc = searchPoint(dMat, leftPoint, 5, rng);
-	
-	if (p3_loc == INVALID_CVPOINT2i || p2_loc == INVALID_CVPOINT2i || p3_loc == INVALID_CVPOINT2i)
-	{
-		std::cout << "Detect plane failed \n";
-	}
-
-	cv::Vec3f p1 = getPointXYZ(dMat, camInfo, p1_loc);
-	cv::Vec3f p2 = getPointXYZ(dMat, camInfo, p2_loc);
-	cv::Vec3f p3 = getPointXYZ(dMat, camInfo, p3_loc);
-
-	cv::Vec3f v1 = cv::normalize(p2 - p1);
-	cv::Vec3f v2 = cv::normalize(p3 - p1);
-
-	cv::Vec3f planeNormal = cv::normalize(v1.cross(v2));
-	float d = -planeNormal[0] * p1[0] - planeNormal[1] * p1[1] - planeNormal[2] * p1[2];//d = - ax -by -cz;
-	printf("Model: %f *x + %f *y + %f *z + %f = 0\n", planeNormal[0],planeNormal[1],planeNormal[2],d);
-	return cv::Vec4f(planeNormal[0], planeNormal[1], planeNormal[2], d);
-}
-
-cv::Point3f projectPointToPlane(cv::Point3f p, cv::Vec4f planeModel)
-{
-	float d = (planeModel[0] * p.x + planeModel[1] * p.y + planeModel[2] * p.z + planeModel[3]);
-	return p - cv::Point3f(d*planeModel[0], d*planeModel[1], d*planeModel[2]);
-}
-
-cv::Point2f pointInImage(cv::Point3f p, ImgProc3D::Intr & m_camInfo)
-{
-	float j = (p.x / p.z)*m_camInfo.fx + m_camInfo.cx ;
-	float i = (p.y / p.z)*m_camInfo.fy + m_camInfo.cy;
-
-	return cv::Point2f(j,i);
-}
-
 int main()
 {
 	generateTemplate();

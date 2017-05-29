@@ -258,35 +258,43 @@ int main()
 		if (leftRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_left(left_InitRect).clone(), left_pca);
 		if (rightRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
 		
-		if (leftRS.RGB_max_val > 0.75 && rightRS.RGB_max_val > 0.75) 
-		{
+		if (leftRS.RGB_max_val > 0.75 && rightRS.RGB_max_val > 0.75) {
 			updateTemplate(left_pca, right_pca, mKernel);
 			use_refined_template = true;
 		}
-		else
-		{
+		else{
 			use_refined_template = false;
 		}
 
-		//cv::Mat match_rgbd_right_bin;
-		//cv::threshold(match_rgbd_right, match_rgbd_right_bin, 0.3, 1, CV_THRESH_BINARY);
-		//match_rgbd_right_bin.convertTo(match_rgbd_right_bin, CV_8UC1);
-		//std::vector<Vec4i> lines;
-		//HoughLinesP(match_rgbd_right_bin, lines, 1, CV_PI / 180, 50, 50, 10);
-		//for (size_t i = 0; i < lines.size(); i++)
-		//{
-		//	Vec4i l = lines[i];
-		//	line(img, toOriginal(Point(l[0], l[1])), toOriginal(Point(l[2], l[3])), Scalar(0, 0, 255), 1, CV_AA);
-		//}
-
 		std::vector<cv::Point> rightList;
-		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(20, 20), 20);
+		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(32, 32), 20);
+
+		if (rightRS.RGB_max_val > 0.5 && leftRS.RGB_max_val > 0.5 && rightList.size() > 1)
+		{
+			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(leftRS.RGBD_max_loc), toOriginal(rightList[0]), toOriginal(rightList.back()));
+
+			for (int s = -2; s < 3; s++)
+			{
+				cv::Point3f sp = projectPointToPlane(cv::Point3f(s, -1.5, 0), laneModel);
+				cv::Point3f ep = projectPointToPlane(cv::Point3f(s, -1.5, 9), laneModel);
+				cv::Scalar color = cv::Scalar(0, 255, 0);
+				if (s == -2 || s == 2) color = cv::Scalar(0, 0, 255);
+				cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), color, 1);
+			}
+
+			for (int s = 1; s < 10; s++)
+			{
+				cv::Point3f sp = projectPointToPlane(cv::Point3f(-2, -1.5, s), laneModel);
+				cv::Point3f ep = projectPointToPlane(cv::Point3f(2, -1.5, s), laneModel);
+				cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), cv::Scalar(0, 25 * (10 - s), 25 * (s)), 1);
+			}
+			//cv::waitKey();
+		}
+
 		if (rightList.size() > 0){
 			cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 0), 2);
 		}
-		for (int i = 0; i < rightList.size(); i++){
-			cv::circle(img, toOriginal(rightList[i]), 5, CV_COLOR_GREEN, 2);
-		}
+
 
 		displayKernel(mKernel);
 		displayMatchingResults(img, leftRS, left_pca, CV_COLOR_BLUE);

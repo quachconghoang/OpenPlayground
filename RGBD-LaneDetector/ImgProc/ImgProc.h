@@ -10,11 +10,10 @@
 cv::Vec4f fast_PlaneDetect(const cv::Mat & depthMat, cv::Mat & rgbMat, const ImgProc3D::Intr & camInfo, bool img320x240=false);
 
 //CPU CODE
-void convertToXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Mat & xyzMat);
-void fillLaneMap2D(cv::Mat & xyzMat, cv::Mat & lane2D, cv::Vec4f planeModel, float threshold=0.05f);
-void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap);
-
-cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Point2i p);
+//void convertToXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Mat & xyzMat);
+//void fillLaneMap2D(cv::Mat & xyzMat, cv::Mat & lane2D, cv::Vec4f planeModel, float threshold=0.05f);
+//void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap);
+//cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Point2i p);
 
 //Template matching utilities
 struct PCA_Result {
@@ -43,4 +42,21 @@ cv::Point cpu_findMinmax(const cv::Mat & matchingResult, double & maxVal);
 
 cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxVal);
 
+cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius, cv::RNG & rng);
+
+cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point & leftPoint,
+	cv::Point & rightPointNear, cv::Point & rightPointFar);
+
+inline cv::Point3f projectPointToPlane(cv::Point3f p, cv::Vec4f planeModel)
+{
+	float d = (planeModel[0] * p.x + planeModel[1] * p.y + planeModel[2] * p.z + planeModel[3]);
+	return p - cv::Point3f(d*planeModel[0], d*planeModel[1], d*planeModel[2]);
+}
+
+inline cv::Point2f pointInImage(cv::Point3f p, ImgProc3D::Intr & m_camInfo)
+{
+	float j = (p.x / p.z)*m_camInfo.fx + m_camInfo.cx;
+	float i = (p.y / p.z)*m_camInfo.fy + m_camInfo.cy;
+	return cv::Point2f(j, i);
+}
 #endif

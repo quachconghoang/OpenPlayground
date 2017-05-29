@@ -146,7 +146,7 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		cv::Rect newBox(boxTL, boxBR);
 		cv::Point tmpCenter;
 		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
-		if (nonZero < 10) { break; }
+		if (nonZero < 20) { break; }
 		else{
 			listPoints.push_back(tmpCenter + boxTL);
 			boxTL += tmpCenter;
@@ -156,6 +156,7 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	std::reverse(listPoints.begin(), listPoints.end());
 
 	//Go Up --||--
+	int try_count = 0;
 	boxTL = initPoint - jumpDistance;
 	boxBR = initPoint;
 	while (rsRect.contains(boxBR) && rsRect.contains(boxTL))
@@ -163,12 +164,12 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		cv::Rect newBox(boxTL, boxBR);
 		cv::Point tmpCenter;
 		int nonZero = countNonZeroCenter(tmpResult(newBox), tmpCenter);
-		if (nonZero < 10){
-			break;
+		if (nonZero < 20){
+			break;		
 		}
 		else{
 			listPoints.push_back(tmpCenter + boxTL);
-			boxTL -= tmpCenter;
+			boxTL -= (cv::Point(boxSize.width / 2, boxSize.height / 2) - tmpCenter);
 			boxBR = boxTL + jumpDistance;
 		}
 	}
@@ -206,146 +207,6 @@ cv::Point3f getPointXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInf
 	return rs;
 }
 
-cv::Vec4f fast_PlaneDetect(const cv::Mat & depthMat, cv::Mat & rgbMat, const ImgProc3D::Intr & camInfo, bool img320x240/* =false */)
-{
-	cv::RNG rng(0xFFFFFFFF);
-	bool planeDetected = false;
-
-	int imgW = depthMat.cols;
-	int imgH = depthMat.rows;
-
-	cv::Point2i invalid_loc, p1_loc, p2_loc, p3_loc;
-	if (img320x240)	{
-		p1_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2, imgH - 30), rng, cv::Point2i(50, 25));
-		p2_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2 - 80, imgH / 2), rng, cv::Point2i(50, 20));
-		p3_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2 + 80, imgH / 2), rng, cv::Point2i(50, 20));
-	}
-	else {
-		p1_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2, imgH - 60), rng, cv::Point2i(50, 30));
-		p2_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2 - 150, imgH / 2), rng, cv::Point2i(50, 20));
-		p3_loc = getRandomSample(depthMat, cv::Point2i(imgW / 2 + 150, imgH / 2), rng, cv::Point2i(50, 20));
-	}
-
-	if (p1_loc == INVALID_CVPOINT2i || p2_loc == INVALID_CVPOINT2i || p3_loc == INVALID_CVPOINT2i)
-	{
-		std::cout << "Detect plane failed \n";
-		return cv::Vec4f(0.f, 1.f, 0.f, -0.03f); //Get previous values or something else
-	}
-
-	//cv::circle(rgbMat, p1_loc, 3, cv::Scalar(0, 0, 255), 3);
-	//cv::circle(rgbMat, p2_loc, 3, cv::Scalar(0, 0, 255), 3);
-	//cv::circle(rgbMat, p3_loc, 3, cv::Scalar(0, 0, 255), 3);
-
-	cv::Vec3f p1 = getPointXYZ(depthMat, camInfo, p1_loc);
-	cv::Vec3f p2 = getPointXYZ(depthMat, camInfo, p2_loc);
-	cv::Vec3f p3 = getPointXYZ(depthMat, camInfo, p3_loc);
-	cv::Vec3f c = (p1 + p2 + p3) / 3;
-
-	cv::Vec3f v1 = cv::normalize(p2 - p1);
-	cv::Vec3f v2 = cv::normalize(p3 - p1);
-
-	cv::Vec3f planeNormal = cv::normalize(v1.cross(v2));
-	float d = -planeNormal[0] * c[0] - planeNormal[1] * c[1] - planeNormal[2] * c[2];//d = - ax -by -cz;
-
-	//printf("Model: %f *x + %f *y + %f *z + %f = 0\n", planeNormal[0],planeNormal[1],planeNormal[2],d);
-	return cv::Vec4f(planeNormal[0], planeNormal[1], planeNormal[2], d);
-}
-
-void convertToXYZ(const cv::Mat & depthMat, const ImgProc3D::Intr & camInfo, cv::Mat & xyzMat)
-{
-	cv::Mat depthImgF;
-	depthMat.convertTo(depthImgF, CV_32F); // convert the image data to float type 
-	depthImgF /= camInfo.scale;
-
-	const float qnan = std::numeric_limits<float>::quiet_NaN();
-
-	int idx = 0;
-	for (int i = 0; i < depthImgF.rows; i++)
-	{
-		for (int j = 0; j < depthImgF.cols; j++)
-		{
-			float d = depthImgF.at<float>(i, j);
-			
-
-			if (d == 0)
-				xyzMat.at<cv::Point3f>(i, j) = cv::Point3f(qnan, qnan, qnan);
-			else
-				xyzMat.at<cv::Point3f>(i, j) = cv::Point3f((j - camInfo.cx) * d / camInfo.fx, (i - camInfo.cy) * d / camInfo.fy, d);
-			idx++;
-		}
-	}
-}
-
-void fillLaneMap2D(cv::Mat & xyzMat, cv::Mat & lane2D, cv::Vec4f planeModel, float threshold)
-{
-	cv::Point3f planeNormal(planeModel[0], planeModel[1], planeModel[2]);
-	cv::Point3f e_1 = planeNormal.cross(cv::Point3f(0, 0, 1));
-	cv::Point3f e_2 = -planeNormal.cross(e_1);
-	cv::Point3f planeOrg = -planeModel[3] * planeNormal;
-
-	for (int i = 0; i < xyzMat.rows; i++)
-	{
-		for (int j = 0; j < xyzMat.cols; j++)
-		{
-			cv::Point3f p = xyzMat.at<cv::Point3f>(i, j);
-			if (!std::isnan(p.x))
-			{
-				if (fabs(planeModel[0] * p.x + planeModel[1] * p.y + planeModel[2] * p.z + planeModel[3]) < threshold)
-				{
-					cv::Point3f p_t = p - planeOrg;
-
-					float p_x_new = p_t.dot(e_1);
-					float p_y_new = p_t.dot(e_2);
-					lane2D.at<cv::Point2f>(i, j) = cv::Point2f(p_x_new, p_y_new);
-				}
-			}
-			/*	NEAR RANGE INTERPOLATION	*/
-			else{
-				if (i > 120){
-					const float fx = 616.442444f;
-					const float fy = 616.442444f;
-					const float cx = 319.5f;
-					const float cy = 239.5f;
-					cv::Point3f rayLine = cv::normalize(cv::Vec3f((j - cx) / fx, (i - cy) / fy, 1));
-					float r = rayLine.dot(planeNormal);
-
-					p = (-planeModel[3]) / r * rayLine;
-					cv::Point3f p_t = p - planeOrg;
-					float p_x_new = p_t.dot(e_1);
-					float p_y_new = p_t.dot(e_2);
-					lane2D.at<cv::Point2f>(i, j) = cv::Point2f(p_x_new, p_y_new);
-				}
-			}
-		}
-	}
-}
-
-void create2DGrid(cv::Mat & lane2DMap, cv::Mat & colorMap, cv::Mat & gridMap)
-{
-	// 1 pixel = 2cm
-	float scale = 1/0.02;
-	int width = gridMap.cols;
-	int height = gridMap.rows;
-	cv::Rect mapRect(0, 0, width, height);
-
-	for (int i = 0; i < lane2DMap.rows; i++)
-	{
-		for (int j = 0; j < lane2DMap.cols; j++)
-		{
-			cv::Point2f p = lane2DMap.at<cv::Point2f>(i, j);
-			if (!std::isnan(p.x))
-			{
-				int new_x = int(width / 2 + p.x * scale);
-				int new_y = int(height - p.y * scale);
-				if (mapRect.contains(cv::Point2i(new_x, new_y)))
-				{
-					gridMap.at<cv::Vec3b>(new_y, new_x) = colorMap.at<cv::Vec3b>(i, j);
-				}
-			}
-		}
-	}
-}
-
 cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxVal)
 {
 	double minVal;
@@ -360,4 +221,51 @@ cv::Point cpu_findMinmax(const cv::Mat & matchingResult, double & maxVal)
 	cv::Point minLoc, maxLoc;
 	cv::minMaxLoc(matchingResult, &minVal, &maxVal, &minLoc, &maxLoc);
 	return maxLoc;
+}
+
+
+cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius, cv::RNG & rng)
+{
+	int tryCount = 0;
+	cv::Point2i ranPoint;
+	do {
+		ranPoint = cv::Point2i(
+			rng.uniform(origin.x - searchRadius, origin.x + searchRadius),
+			rng.uniform(origin.y - searchRadius, origin.y + searchRadius));
+		tryCount++;
+		if (tryCount == 30)
+		{
+			ranPoint = INVALID_CVPOINT2i;
+			break;
+		}
+	} while (dMat.at<ushort>(ranPoint) == 0);
+
+	return ranPoint;
+}
+
+cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point & leftPoint,
+	cv::Point & rightPointNear, cv::Point & rightPointFar)
+{
+	cv::RNG rng(0xFFFFFFFF);
+
+	cv::Point p1_loc = searchPoint(dMat, rightPointNear, 5, rng);
+	cv::Point p2_loc = searchPoint(dMat, rightPointFar, 5, rng);
+	cv::Point p3_loc = searchPoint(dMat, leftPoint, 5, rng);
+
+	if (p3_loc == INVALID_CVPOINT2i || p2_loc == INVALID_CVPOINT2i || p3_loc == INVALID_CVPOINT2i)
+	{
+		std::cout << "Detect plane failed \n";
+	}
+
+	cv::Vec3f p1 = getPointXYZ(dMat, camInfo, p1_loc);
+	cv::Vec3f p2 = getPointXYZ(dMat, camInfo, p2_loc);
+	cv::Vec3f p3 = getPointXYZ(dMat, camInfo, p3_loc);
+
+	cv::Vec3f v1 = cv::normalize(p2 - p1);
+	cv::Vec3f v2 = cv::normalize(p3 - p1);
+
+	cv::Vec3f planeNormal = cv::normalize(v1.cross(v2));
+	float d = -planeNormal[0] * p1[0] - planeNormal[1] * p1[1] - planeNormal[2] * p1[2];//d = - ax -by -cz;
+	printf("Model: %f *x + %f *y + %f *z + %f = 0\n", planeNormal[0], planeNormal[1], planeNormal[2], d);
+	return cv::Vec4f(planeNormal[0], planeNormal[1], planeNormal[2], d);
 }
