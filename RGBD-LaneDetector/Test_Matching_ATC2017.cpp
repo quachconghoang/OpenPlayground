@@ -22,8 +22,8 @@ cv::Point templateCenter(16, 16);
 cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-06-FOG/";
-int count = 400;
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
+int count = 747;
 bool needResize = true;
 cv::Size fullImg_Size(1280, 760);
 cv::Size processImg_Size(640, 380);
@@ -46,9 +46,9 @@ cv::Size matchResult_Size(
 	laneRegion.width - templateSize.width + 1,
 	laneRegion.height - templateSize.height + 1);
 
-#define TEMP_LINE_WIDTH 10
+#define TEMP_LINE_WIDTH 8
 #define D_BETA 0.1f
-#define D_GAMMA 0.2f
+#define D_GAMMA 0.4f
 #define depthThresh 1000
 #define GRAY_THRESH 100
 bool use_normal = true; // Using normal constraint for all lines
@@ -90,11 +90,11 @@ void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & ke
 
 	cv::Point l_start = templateCenter - cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
 	cv::Point l_end = templateCenter + cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
-	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(255), TEMP_LINE_WIDTH);
+	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(150), TEMP_LINE_WIDTH);
 	
 	cv::Point r_start = templateCenter - cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
 	cv::Point r_end = templateCenter + cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
-	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(255), TEMP_LINE_WIDTH);
+	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(150), TEMP_LINE_WIDTH);
 }
 
 void displayKernel(MatchingKernel & kernel)
@@ -218,7 +218,7 @@ int main()
 		cv::Mat imgGray, imgBin;
 		cv::cvtColor(imgProc, imgGray, cv::COLOR_RGB2GRAY);
 		cv::threshold(imgGray, imgBin, GRAY_THRESH, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
-		
+
 		cv::Mat match_RGB_right, match_RGB_left;
 
 		if (use_refined_template){
@@ -268,6 +268,7 @@ int main()
 
 		std::vector<cv::Point> rightList;
 		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(32, 32), 20);
+		cv::threshold(match_rgbd_left, match_rgbd_left, 0.5, 1, CV_THRESH_BINARY);
 
 		if (rightRS.RGB_max_val > 0.5 && leftRS.RGB_max_val > 0.5 && rightList.size() > 1)
 		{
@@ -292,9 +293,8 @@ int main()
 		}
 
 		if (rightList.size() > 0){
-			cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 0), 2);
+			cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 255), 2);
 		}
-
 
 		displayKernel(mKernel);
 		displayMatchingResults(img, leftRS, left_pca, CV_COLOR_BLUE);
