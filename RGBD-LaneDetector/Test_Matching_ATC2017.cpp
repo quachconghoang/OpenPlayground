@@ -22,23 +22,23 @@ cv::Point templateCenter(16, 16);
 cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
-std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-FOG/";
-int count = 747;
-bool needResize = true;
-cv::Size fullImg_Size(1280, 760);
-cv::Size processImg_Size(640, 380);
-cv::Rect laneRegion(0, 156, 640, 224);
-cv::Point orgTemplate(0 + 16, 156 + 16);
+//std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+//int count = 140;
+//bool needResize = true;
+//cv::Size fullImg_Size(1280, 760);
+//cv::Size processImg_Size(640, 380);
+//cv::Rect laneRegion(0, 156, 640, 224);
+//cv::Point orgTemplate(0 + 16, 156 + 16);
 
 // Real data params
-//std::string dirPath = "D:/LaneData/Sample_30-04/";
-//int count = 1800;
-//bool needResize = false;
-//cv::Size fullImg_Size(640, 480);
-//cv::Size processImg_Size(640, 480);
-//cv::Rect laneRegion(0, 100, 640, 380);
-//cv::Point orgTemplate(0 + 16, 100 + 16);
-//ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
+std::string dirPath = "D:/LaneData/Sample_30-04/";
+int count = 2222;
+bool needResize = false;
+cv::Size fullImg_Size(640, 480);
+cv::Size processImg_Size(640, 480);
+cv::Rect laneRegion(0, 60, 640, 420);
+cv::Point orgTemplate(0 + 16, 60 + 16);
+ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
 
 cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
 cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
@@ -53,7 +53,7 @@ cv::Size matchResult_Size(
 #define GRAY_THRESH 100
 bool use_normal = true; // Using normal constraint for all lines
 bool use_depth = true; // Using depth constraint for SOLID line - not DASH lines
-bool use_refined_template = false;
+bool use_refined_template = true;
 
 struct MatchingKernel
 {
@@ -90,11 +90,11 @@ void updateTemplate(PCA_Result leftPCA, PCA_Result rightPCA, MatchingKernel & ke
 
 	cv::Point l_start = templateCenter - cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
 	cv::Point l_end = templateCenter + cv::Point(30 * leftPCA._vec[0], 30 * leftPCA._vec[1]);
-	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(150), TEMP_LINE_WIDTH);
+	cv::line(kernel.left_enhance, l_start, l_end, cv::Scalar(255), TEMP_LINE_WIDTH);
 	
 	cv::Point r_start = templateCenter - cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
 	cv::Point r_end = templateCenter + cv::Point(30 * rightPCA._vec[0], 30 * rightPCA._vec[1]);
-	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(150), TEMP_LINE_WIDTH);
+	cv::line(kernel.right_enhance, r_start, r_end, cv::Scalar(255), TEMP_LINE_WIDTH);
 }
 
 void displayKernel(MatchingKernel & kernel)
@@ -110,11 +110,14 @@ void displayKernel(MatchingKernel & kernel)
 void displayMatchingResults(cv::Mat & img, MatchingResult mRS, PCA_Result pcaRS, cv::Scalar colorCode)
 {
 	cv::circle(img, toOriginal(mRS.RGBD_max_loc), 7, colorCode, 2);
+
+	cv::rectangle(img, toOriginal(cv::Rect(mRS.RGBD_max_loc - cv::Point(16, 16), mRS.RGBD_max_loc + cv::Point(16, 16))), colorCode, 2);
+
 	cv::putText(img, std::to_string(mRS.RGBD_max_val), toOriginal(mRS.RGBD_max_loc) - cv::Point(20, 15),
 		cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, colorCode, 1);
 
 	cv::arrowedLine(img, toOriginal(mRS.RGBD_max_loc),
-		toOriginal(mRS.RGBD_max_loc - cv::Point(60 * pcaRS._vec[0], 60 * pcaRS._vec[1])), colorCode);
+		toOriginal(mRS.RGBD_max_loc - cv::Point(60 * pcaRS._vec[0], 60 * pcaRS._vec[1])), colorCode,2);
 }
 
 void compute_Geometric_Map(cv::Mat & dImage_Meter, cv::Mat & resultMap)
@@ -267,12 +270,12 @@ int main()
 		}
 
 		std::vector<cv::Point> rightList;
-		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(32, 32), 20);
+		getLinePoints_SlindingBox_(match_rgbd_right, rightList, rightRS.RGBD_max_loc, right_pca._vec, cv::Size(32, 32), 32);
 		cv::threshold(match_rgbd_left, match_rgbd_left, 0.5, 1, CV_THRESH_BINARY);
 
 		if (rightRS.RGB_max_val > 0.5 && leftRS.RGB_max_val > 0.5 && rightList.size() > 1)
 		{
-			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(leftRS.RGBD_max_loc), toOriginal(rightList[0]), toOriginal(rightList.back()));
+			/*cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(leftRS.RGBD_max_loc), toOriginal(rightList[0]), toOriginal(rightList.back()));
 
 			for (int s = -2; s < 3; s++)
 			{
@@ -288,12 +291,16 @@ int main()
 				cv::Point3f sp = projectPointToPlane(cv::Point3f(-2, -1.5, s), laneModel);
 				cv::Point3f ep = projectPointToPlane(cv::Point3f(2, -1.5, s), laneModel);
 				cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), cv::Scalar(0, 25 * (10 - s), 25 * (s)), 1);
-			}
+			}*/
 			//cv::waitKey();
 		}
 
 		if (rightList.size() > 0){
-			cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 255), 2);
+			//cv::line(img, toOriginal(*rightList.begin()), toOriginal(rightList.back()), cv::Scalar(0, 255, 255), 2);
+			for (int s = 0; s < rightList.size(); s++)
+			{
+				cv::circle(img, toOriginal(rightList[s]), 3, cv::Scalar(0, 255, 255), 2);
+			}
 		}
 
 		displayKernel(mKernel);

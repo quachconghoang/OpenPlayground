@@ -149,6 +149,9 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		if (nonZero < 20) { break; }
 		else{
 			listPoints.push_back(tmpCenter + boxTL);
+			if (tmpCenter.x < 5 || tmpCenter.x < 5){
+				tmpCenter += cv::Point(5, 5);
+			}
 			boxTL += tmpCenter;
 			boxBR = boxTL + jumpDistance;
 		}
@@ -169,7 +172,11 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 		}
 		else{
 			listPoints.push_back(tmpCenter + boxTL);
-			boxTL -= (cv::Point(boxSize.width / 2, boxSize.height / 2) - tmpCenter);
+			if (tmpCenter.x > boxSize.width || tmpCenter.x > boxSize.height){
+				tmpCenter -= cv::Point(5, 5);
+			}
+
+			boxTL -= (cv::Point(boxSize.width, boxSize.height) - tmpCenter);
 			boxBR = boxTL + jumpDistance;
 		}
 	}
