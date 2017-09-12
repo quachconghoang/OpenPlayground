@@ -24,8 +24,8 @@ cv::Rect laneRegion(0, 100, 640, 380);
 cv::Point orgTemplate(0 + 16, 100 + 16);
 
 
-cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
-cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
+const cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
+const cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
 
 cv::Size matchingResult_Size(laneRegion.width - templateSize.width + 1, 
 	laneRegion.height - templateSize.height + 1);
@@ -135,8 +135,10 @@ int main()
 		
 		cv::Vec2f left_Orient, right_Orient;
 		if (left_MaxVal > 0.5 && right_MaxVal > 0.5) {
-			left_Orient = getAnglePCA(rs_Left(left_InitRect));
-			right_Orient = getAnglePCA(rs_Right(right_InitRect));
+			cv::Mat _t_left = rs_Left(left_InitRect);
+			cv::Mat _t_right = rs_Right(right_InitRect);
+			left_Orient = getAnglePCA(_t_left);
+			right_Orient = getAnglePCA(_t_right);
 		}
 
 		cv::imshow("RS_L", rs_Left);
@@ -178,7 +180,10 @@ int main()
 
 		if (right_MaxVal > 0.5 && left_MaxVal > 0.5 && rightList.size()>1)
 		{
-			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(left_MaxLoc), toOriginal(rightList[0]), toOriginal(rightList.back()));
+			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, 
+				toOriginal(left_MaxLoc), 
+				toOriginal(rightList[0]), 
+				toOriginal(rightList.back()));
 			
 			for (int s = -2; s < 3; s++)
 			{

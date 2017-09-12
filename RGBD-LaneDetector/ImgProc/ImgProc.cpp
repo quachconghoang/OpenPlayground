@@ -104,7 +104,7 @@ void getAnglePCA(cv::Mat & tmpRS_normalized, PCA_Result & tRS)
 	tRS._val_2 = eigen_val[1];
 }
 
-int countNonZeroCenter(cv::Mat & _map, cv::Point & center)
+int countNonZeroCenter(const cv::Mat & _map, cv::Point & center)
 {
 	center = cv::Point(0, 0);
 	//cv::imshow("MapTMP", _map);
@@ -250,8 +250,8 @@ cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius
 	return ranPoint;
 }
 
-cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point & leftPoint,
-	cv::Point & rightPointNear, cv::Point & rightPointFar)
+cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point leftPoint,
+	cv::Point rightPointNear, cv::Point rightPointFar)
 {
 	cv::RNG rng(0xFFFFFFFF);
 

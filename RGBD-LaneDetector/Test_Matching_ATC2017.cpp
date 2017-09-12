@@ -22,23 +22,24 @@ cv::Point templateCenter(16, 16);
 cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
-//std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
-//int count = 140;
-//bool needResize = true;
-//cv::Size fullImg_Size(1280, 760);
-//cv::Size processImg_Size(640, 380);
-//cv::Rect laneRegion(0, 156, 640, 224);
-//cv::Point orgTemplate(0 + 16, 156 + 16);
+std::string dirPath = "/home/hoangqc/DATASETS/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+int count = 140;
+bool needResize = true;
+cv::Size fullImg_Size(1280, 760);
+cv::Size processImg_Size(640, 380);
+cv::Rect laneRegion(0, 156, 640, 224);
+cv::Point orgTemplate(0 + 16, 156 + 16);
+ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
 
 // Real data params
-std::string dirPath = "D:/LaneData/Sample_30-04/";
-int count = 2222;
-bool needResize = false;
-cv::Size fullImg_Size(640, 480);
-cv::Size processImg_Size(640, 480);
-cv::Rect laneRegion(0, 60, 640, 420);
-cv::Point orgTemplate(0 + 16, 60 + 16);
-ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
+// std::string dirPath = "/home/hoangqc/DATASETS/LaneData/Sample_30-04/";
+// int count = 1800;
+// bool needResize = false;
+// cv::Size fullImg_Size(640, 480);
+// cv::Size processImg_Size(640, 480);
+// cv::Rect laneRegion(0, 60, 640, 420);
+// cv::Point orgTemplate(0 + 16, 60 + 16);
+// ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
 
 cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
 cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
@@ -179,7 +180,6 @@ int main()
 	std::vector<SyncFrame> dataHeaders;
 	readSyncFileHeader(dirPath + "associations.txt", dataHeaders);
 
-	ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
 	cv::Mat cameraMatrix = (cv::Mat_<float>(3, 3) << m_camInfo.fx, 0, m_camInfo.cx, 0, m_camInfo.fy, m_camInfo.cy, 0, 0, 1);
 	cv::rgbd::RgbdNormals n_estimate(processImg_Size.height, 
 		processImg_Size.width, 
@@ -258,8 +258,16 @@ int main()
 
 		// 5. Update template
 		PCA_Result left_pca, right_pca;
-		if (leftRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_left(left_InitRect).clone(), left_pca);
-		if (rightRS.RGB_max_val > 0.5) getAnglePCA(match_RGB_right(right_InitRect).clone(), right_pca);
+		if (leftRS.RGB_max_val > 0.5) {
+			cv::Mat t_PCA = match_RGB_left(left_InitRect).clone();
+			getAnglePCA(t_PCA, left_pca);
+		}
+			
+		if (rightRS.RGB_max_val > 0.5){
+			cv::Mat t_PCA = match_RGB_right(right_InitRect).clone();
+			getAnglePCA(t_PCA, right_pca);
+		}
+			
 		
 		if (leftRS.RGB_max_val > 0.75 && rightRS.RGB_max_val > 0.75) {
 			updateTemplate(left_pca, right_pca, mKernel);

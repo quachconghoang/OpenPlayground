@@ -34,7 +34,7 @@ void getLinePoints_SlindingBox_(cv::Mat & tmpResult,
 	int jumpStep = 32);
 
 
-int countNonZeroCenter(cv::Mat & _map, cv::Point & center);
+int countNonZeroCenter(const cv::Mat & _map, cv::Point & center);
 
 #define INVALID_CVPOINT2i cv::Point2i(-1, -1)
 
@@ -44,8 +44,8 @@ cv::Point cuda_findMinmax(const cv::cuda::GpuMat & matchingResult, double & maxV
 
 cv::Point searchPoint(const cv::Mat & dMat, cv::Point & origin, int searchRadius, cv::RNG & rng);
 
-cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point & leftPoint,
-	cv::Point & rightPointNear, cv::Point & rightPointFar);
+cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, cv::Point leftPoint,
+	cv::Point rightPointNear, cv::Point rightPointFar);
 
 inline cv::Point3f projectPointToPlane(cv::Point3f p, cv::Vec4f planeModel)
 {
