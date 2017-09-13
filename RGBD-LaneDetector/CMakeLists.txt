@@ -23,9 +23,8 @@ file(GLOB Utils_src ./Utils/*.hpp ./Utils/*.cpp)
 cuda_add_library(libImgProcCUDA STATIC ${ImgProcCUDA_src})
 target_link_libraries( libImgProcCUDA ${OpenCV_LIBS})
 
-#add_executable( Test_Pointcloud Test_Pointcloud.cpp )
-#target_link_libraries( Test_Pointcloud ${OpenCV_LIBS} libImgProcCUDA)
-#set_target_properties(Test_Pointcloud PROPERTIES LINK_FLAGS "/ignore:4244")
+add_executable( Test_Pointcloud Test_Pointcloud.cpp )
+target_link_libraries( Test_Pointcloud ${OpenCV_LIBS} libImgProcCUDA)
 
 set(Build_RansacPlane false CACHE BOOL "Build pcl processing")
 if(Build_RansacPlane)
