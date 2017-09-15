@@ -255,13 +255,14 @@ cv::Vec4f getPlaneModel(const cv::Mat & dMat, const ImgProc3D::Intr & camInfo, c
 {
 	cv::RNG rng(0xFFFFFFFF);
 
-	cv::Point p1_loc = searchPoint(dMat, rightPointNear, 5, rng);
-	cv::Point p2_loc = searchPoint(dMat, rightPointFar, 5, rng);
-	cv::Point p3_loc = searchPoint(dMat, leftPoint, 5, rng);
+	cv::Point p1_loc = searchPoint(dMat, rightPointNear, 12, rng);
+	cv::Point p2_loc = searchPoint(dMat, rightPointFar, 12, rng);
+	cv::Point p3_loc = searchPoint(dMat, leftPoint, 12, rng);
 
-	if (p3_loc == INVALID_CVPOINT2i || p2_loc == INVALID_CVPOINT2i || p3_loc == INVALID_CVPOINT2i)
+	if (p1_loc == INVALID_CVPOINT2i || p2_loc == INVALID_CVPOINT2i || p3_loc == INVALID_CVPOINT2i)
 	{
 		std::cout << "Detect plane failed \n";
+		return cv::Vec4f(0, 0, 1, 999);
 	}
 
 	cv::Vec3f p1 = getPointXYZ(dMat, camInfo, p1_loc);

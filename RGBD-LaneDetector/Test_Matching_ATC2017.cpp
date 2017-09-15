@@ -22,24 +22,26 @@ cv::Point templateCenter(16, 16);
 cv::Size cellTables(640 / 32, 480 / 32); // 20 - 15;
 
  //Synthetic data params
-std::string dirPath = "/home/hoangqc/DATASETS/LaneData/SynthDataLane/SEQS-01-SUMMER/";
-int count = 140;
-bool needResize = true;
-cv::Size fullImg_Size(1280, 760);
-cv::Size processImg_Size(640, 380);
-cv::Rect laneRegion(0, 156, 640, 224);
-cv::Point orgTemplate(0 + 16, 156 + 16);
-ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
+//std::string dirPath = "/home/hoangqc/DATASETS/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+//std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+//int count = 140;
+//bool needResize = true;
+//cv::Size fullImg_Size(1280, 760);
+//cv::Size processImg_Size(640, 380);
+//cv::Rect laneRegion(0, 156, 640, 224);
+//cv::Point orgTemplate(0 + 16, 156 + 16);
+//ImgProc3D::Intr m_camInfo = ImgProc3D::Intr(ImgProc3D::IntrMode_Synthia_RGBD_HALF);
 
 // Real data params
-// std::string dirPath = "/home/hoangqc/DATASETS/LaneData/Sample_30-04/";
-// int count = 1800;
-// bool needResize = false;
-// cv::Size fullImg_Size(640, 480);
-// cv::Size processImg_Size(640, 480);
-// cv::Rect laneRegion(0, 60, 640, 420);
-// cv::Point orgTemplate(0 + 16, 60 + 16);
-// ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
+ //std::string dirPath = "/home/hoangqc/DATASETS/LaneData/Sample_30-04/";
+std::string dirPath = "D:/LaneData/Sample_30-04/";
+ int count = 2000;
+ bool needResize = false;
+ cv::Size fullImg_Size(640, 480);
+ cv::Size processImg_Size(640, 480);
+ cv::Rect laneRegion(0, 60, 640, 420);
+ cv::Point orgTemplate(0 + 16, 60 + 16);
+ ImgProc3D::Intr m_camInfo(ImgProc3D::IntrMode_Realsense_RAW);
 
 cv::Point toOriginal(cv::Point p)	{ return p + laneRegion.tl() + templateCenter; }
 cv::Rect toOriginal(cv::Rect r)		{ return cv::Rect(r.tl() + laneRegion.tl() + templateCenter, r.size()); }
@@ -51,7 +53,11 @@ cv::Size matchResult_Size(
 #define D_BETA 0.1f
 #define D_GAMMA 0.4f
 #define depthThresh 1000
-#define GRAY_THRESH 100
+#define GRAY_THRESH 130
+
+cv::Rect colorThresh_SampleRect;
+double colorThresh_Gray = GRAY_THRESH;
+
 bool use_normal = true; // Using normal constraint for all lines
 bool use_depth = true; // Using depth constraint for SOLID line - not DASH lines
 bool use_refined_template = true;
@@ -114,7 +120,7 @@ void displayMatchingResults(cv::Mat & img, MatchingResult mRS, PCA_Result pcaRS,
 
 	cv::rectangle(img, toOriginal(cv::Rect(mRS.RGBD_max_loc - cv::Point(16, 16), mRS.RGBD_max_loc + cv::Point(16, 16))), colorCode, 2);
 
-	cv::putText(img, std::to_string(mRS.RGBD_max_val), toOriginal(mRS.RGBD_max_loc) - cv::Point(20, 15),
+	cv::putText(img, std::to_string(mRS.RGB_max_val), toOriginal(mRS.RGBD_max_loc) - cv::Point(20, -30),
 		cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 0.3, colorCode, 1);
 
 	cv::arrowedLine(img, toOriginal(mRS.RGBD_max_loc),
@@ -163,6 +169,7 @@ void compute_Adjust_RSMap_1(cv::Mat & rgbd_adjust, cv::Mat & nMap, float mThresh
 		}
 	}
 }
+
 void compute_Adjust_RSMap_2(cv::Mat & rgbd_adjust, cv::Mat & gMap, cv::Mat & nMap, float mThreshold)
 {
 	for (int i = 0; i < rgbd_adjust.rows; i++){
@@ -220,7 +227,7 @@ int main()
 		cv::Mat imgProc = img(laneRegion);
 		cv::Mat imgGray, imgBin;
 		cv::cvtColor(imgProc, imgGray, cv::COLOR_RGB2GRAY);
-		cv::threshold(imgGray, imgBin, GRAY_THRESH, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
+		cv::threshold(imgGray, imgBin, colorThresh_Gray, 255, CV_THRESH_TOZERO); //CV_THRESH_OTSU //CV_THRESH_TOZERO
 
 		cv::Mat match_RGB_right, match_RGB_left;
 
@@ -267,9 +274,30 @@ int main()
 			cv::Mat t_PCA = match_RGB_right(right_InitRect).clone();
 			getAnglePCA(t_PCA, right_pca);
 		}
+
+		
+		// 5.x update color thresh
+		/*colorThresh_SampleRect = cv::Rect(0, 0, 0, 0);
+		if (leftRS.RGB_max_val > 0.5 && rightRS.RGB_max_val > 0.5)
+		{
+			cv::Point p1 = leftRS.RGB_max_loc;
+			cv::Point p2 = rightRS.RGB_max_loc;
+			if (p1.x < p2.x)
+			{
+				cv::Size _tS(128, 64);
+				cv::Point pp = cv::Point((p1.x + p2.x) / 2 - 64, p1.y-32);
+				colorThresh_SampleRect = createSafeRect(pp, matchResult_Size, _tS);
+				colorThresh_SampleRect = toOriginal(colorThresh_SampleRect);
+				cv::rectangle(img, colorThresh_SampleRect, cv::Scalar(255,0,0), 2);
+
+				cv::Scalar _thr_Color = cv::mean(imgGray(colorThresh_SampleRect));
+				colorThresh_Gray = _thr_Color[0] + 20;
+				std::cout << "Update thresh = " << colorThresh_Gray << std::endl;
+			}
+		}*/
 			
 		
-		if (leftRS.RGB_max_val > 0.75 && rightRS.RGB_max_val > 0.75) {
+		if (leftRS.RGB_max_val > 0.70 && rightRS.RGB_max_val > 0.70) {
 			updateTemplate(left_pca, right_pca, mKernel);
 			use_refined_template = true;
 		}
@@ -283,23 +311,26 @@ int main()
 
 		if (rightRS.RGB_max_val > 0.5 && leftRS.RGB_max_val > 0.5 && rightList.size() > 1)
 		{
-			/*cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(leftRS.RGBD_max_loc), toOriginal(rightList[0]), toOriginal(rightList.back()));
+			cv::Vec4f laneModel = getPlaneModel(dimg, m_camInfo, toOriginal(leftRS.RGBD_max_loc), toOriginal(rightList[0]), toOriginal(rightList.back()));
 
-			for (int s = -2; s < 3; s++)
+			if (laneModel[3]!=999)
 			{
-				cv::Point3f sp = projectPointToPlane(cv::Point3f(s, -1.5, 0), laneModel);
-				cv::Point3f ep = projectPointToPlane(cv::Point3f(s, -1.5, 9), laneModel);
-				cv::Scalar color = cv::Scalar(0, 255, 0);
-				if (s == -2 || s == 2) color = cv::Scalar(0, 0, 255);
-				cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), color, 1);
+				for (int s = -2; s < 3; s++)
+				{
+					cv::Point3f sp = projectPointToPlane(cv::Point3f(s, -1.5, 0), laneModel);
+					cv::Point3f ep = projectPointToPlane(cv::Point3f(s, -1.5, 9), laneModel);
+					cv::Scalar color = cv::Scalar(0, 255, 0);
+					if (s == -2 || s == 2) color = cv::Scalar(0, 0, 255);
+					cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), color, 1);
+				}
+
+				for (int s = 1; s < 10; s++)
+				{
+					cv::Point3f sp = projectPointToPlane(cv::Point3f(-2, -1.5, s), laneModel);
+					cv::Point3f ep = projectPointToPlane(cv::Point3f(2, -1.5, s), laneModel);
+					cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), cv::Scalar(0, 25 * (10 - s), 25 * (s)), 1);
+				}
 			}
-
-			for (int s = 1; s < 10; s++)
-			{
-				cv::Point3f sp = projectPointToPlane(cv::Point3f(-2, -1.5, s), laneModel);
-				cv::Point3f ep = projectPointToPlane(cv::Point3f(2, -1.5, s), laneModel);
-				cv::line(img, pointInImage(sp, m_camInfo), pointInImage(ep, m_camInfo), cv::Scalar(0, 25 * (10 - s), 25 * (s)), 1);
-			}*/
 			//cv::waitKey();
 		}
 
@@ -312,12 +343,19 @@ int main()
 		}
 
 		displayKernel(mKernel);
-		displayMatchingResults(img, leftRS, left_pca, CV_COLOR_BLUE);
-		displayMatchingResults(img, rightRS, right_pca, CV_COLOR_RED);
+		if (rightRS.RGB_max_val > 0.5 && leftRS.RGB_max_val > 0.5 && rightList.size() > 1)
+		{
+			displayMatchingResults(img, leftRS, left_pca, CV_COLOR_BLUE);
+			displayMatchingResults(img, rightRS, right_pca, CV_COLOR_RED);
+		}
+		else
+		{
+			displayMatchingResults(img, leftRS, left_pca, cv::Scalar(0,0,0));
+			displayMatchingResults(img, rightRS, right_pca, cv::Scalar(0, 0, 0));
+		}
 
 		/*cv::circle(img, toOriginal(leftRS.RGB_max_loc), 5, CV_COLOR_GREEN, 2);
 		cv::circle(img, toOriginal(rightRS.RGB_max_loc), 5, CV_COLOR_GREEN, 2);*/
-
 
 		cv::putText(img, std::to_string(count), cv::Point(500, 300), cv::HersheyFonts::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 

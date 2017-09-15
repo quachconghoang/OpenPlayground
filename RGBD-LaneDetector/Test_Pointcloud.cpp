@@ -7,8 +7,9 @@
 
 // Depth instr : 640 480 616.442444 616.442444 319.500000 231.408646
 
-std::string dirPath = "/home/hoangqc/DATASETS/LaneData/SynthDataLane/SEQS-01-SUMMER/";
+//std::string dirPath = "/home/hoangqc/DATASETS/LaneData/SynthDataLane/SEQS-01-SUMMER/";
 //std::string dirPath = "D:/LaneData/Sample_30-04/";
+std::string dirPath = "D:/LaneData/SynthDataLane/SEQS-01-SUMMER/";
 int count = 100;
 
 void colorizeDepthImage(const cv::Mat depthImg, cv::Mat & resultMat);
