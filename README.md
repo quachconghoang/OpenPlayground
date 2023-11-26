@@ -1,9 +1,9 @@
-# OpenPlayground (Related to my previous research results)
+# OpenPlayground
 
 ## PSO - CUDA code 
 - 40x times in GPU Gtx 960m (check the paper)
 - Stored in IndoorData & SwarmRobotics.
-- No CMake files :) sorry for my noob at linux at this time.
+- No CMake file :) sorry for my noob at linux at this time.
 Please cited below article if you thing these helpful:
 ```bibtex
 @article{PHUNG201725,
@@ -22,7 +22,7 @@ keywords = {Path planning, Infrastructure monitoring, Bridge inspection, Vision-
 
 ## Lane detector by template-matching + PCA
 - Stored in RGBD-LaneDetector & RGBD-recorder
-- No CMake files too :) the result is out-performed by every deeplearning method now.
+- No CMake file too, and the result is out-performed by every deeplearning method now :)).
 ```bibtex
 @INPROCEEDINGS{8325781,
   author={Quach, Cong Hoang and Tran, Van Lien and Nguyen, Duy Hung and Nguyen, Viet Thang and Pham, Minh Trien and Phung, Manh Duong},
