@@ -2,7 +2,7 @@
 
 ## PSO - CUDA code 
 - 40x times in GPU Gtx 960m (check the paper)
-- Stored in IndoorData & SwarmRobotics.
+- Stored in IndoorData & SwarmRobotics (SwarmRobotics/Test_CUDA/GPU_Swarm.cu)
 - No CMake file :) sorry for my noob at linux at this time.
 Please cited below article if you thing these helpful:
 ```bibtex
